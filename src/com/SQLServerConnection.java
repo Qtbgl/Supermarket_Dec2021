@@ -26,14 +26,7 @@ public class SQLServerConnection {
         Statement stmt = conn.createStatement();
         ResultSet rs = stmt.executeQuery("select * from goods");
 
-        System.out.println("打印sql查询结果");
-        while (rs.next()){
-            System.out.println(rs.getInt("goods_id"));
-            System.out.println(rs.getString("goods_name"));
-            System.out.println(rs.getString("goods_type"));
-            System.out.println(rs.getInt("number_c"));
-            System.out.println("");
-        }
+
 
         conn.close();
     }
