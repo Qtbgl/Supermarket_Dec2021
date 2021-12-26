@@ -1,11 +1,11 @@
 package com.weidong.entity;
 
 import com.weidong.datebase.CustomerSQL;
+import com.weidong.entity.superclass.Supermarket_Member;
 
 import java.util.List;
 
-public class Customer {
-    int id;
+public class Customer extends Supermarket_Member {
     String name;
     String pwd;
     int vip;

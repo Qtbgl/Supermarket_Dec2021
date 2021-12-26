@@ -1,7 +1,12 @@
 package com.weidong.entity;
 
+import java.util.Set;
+
 public class Makeup {
-    Goods goods;
-    //组合进商品的，货品的数量。
-    int N;
+    public static class Node{
+        Goods goods;
+        int N;
+    }
+    Set<Node> makeup;
+    Sale sale;
 }
