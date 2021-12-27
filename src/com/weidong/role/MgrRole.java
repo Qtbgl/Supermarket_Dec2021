@@ -1,9 +1,10 @@
 package com.weidong.role;
 
 import com.weidong.entity.*;
-import com.weidong.exception.AddAlreadyExistedException;
+import com.weidong.exception.AlreadyExistedAddException;
 import com.weidong.exception.IdNotFoundException;
 import com.weidong.exception.ItemCountException;
+import com.weidong.exception.ValueUnreasonException;
 import com.weidong.role.superclass.Role;
 
 import java.util.Date;
@@ -15,7 +16,7 @@ public class MgrRole extends Role {
         goodsBiz.importOld(_import);
     }
     //进口新的货品，不需要id
-    public void importGoods(Import _import) throws AddAlreadyExistedException, ItemCountException {
+    public void importGoods(Import _import) throws AlreadyExistedAddException, ItemCountException {
         goodsBiz.importNew(_import);
     }
     //查看货品进口记录，需要id
@@ -48,7 +49,7 @@ public class MgrRole extends Role {
     }
     //**遗弃货品**
     public void forbidGoods(Goods goods) throws ItemCountException, IdNotFoundException {
-        goodsBiz.remove(goods);
+        goodsBiz.forbid(goods);
     }
     //查看遗弃的货品
     public List<Goods> seeForbiddenGoods(){
@@ -71,7 +72,7 @@ public class MgrRole extends Role {
         return goodsBiz.seeRemove();
     }
     //修改货品其他，需要id
-    public void modifyGoods_etc(Goods goods) throws AddAlreadyExistedException, IdNotFoundException {
+    public void modifyGoods_etc(Goods goods) throws AlreadyExistedAddException, IdNotFoundException {
         goodsBiz.modifyGoods_etc(goods);
     }
     //**统计货品相关商品**
@@ -82,8 +83,11 @@ public class MgrRole extends Role {
     public List<Purchase> getRelatePurchase(Goods goods){
         return goodsBiz.analysePurchases(goods);
     }
+
+    /*以上是超市管理员的货品业务*/
+
     //新增商品，不需要id
-    public void createSale(Sale sale){
+    public void createSale(Sale sale) throws ItemCountException, ValueUnreasonException, IdNotFoundException {
         saleBiz.createSale(sale);
     }
     //查看超市所有商品
@@ -98,28 +102,24 @@ public class MgrRole extends Role {
     public List<Sale> searchSaleLikeName(String info){
         return saleBiz.searchSaleLikeName(info);
     }
-    //搜索含某货品的商品，需要id
-    public List<Sale> searchSaleByGood(Goods goods){
-        return saleBiz.searchSaleByGood(goods);
-    }
     //修改商品组合，需要id
-    public void modifySaleMakeup(Sale sale){
+    public void modifySaleMakeup(Sale sale) throws ItemCountException, IdNotFoundException {
         saleBiz.modifySaleMakeup(sale);
     }
     //修改商品价格，需要id
-    public void modifySalePrice(Sale sale){
+    public void modifySalePrice(Sale sale) throws ValueUnreasonException, IdNotFoundException {
         saleBiz.modifySalePrice(sale);
     }
     //修改商品其他，需要id
-    public void modifySale_etc(Sale sale){
-        saleBiz.modifySale_etc(sale);
+    public void modifySaleName(Sale sale) throws ValueUnreasonException, IdNotFoundException {
+        saleBiz.modifySaleName(sale);
     }
     //**统计商品的修改记录**
-    public List<Sale> getSaleModifyRecords(Sale sale){
+    public List<Sale> getSaleModifyRecords(Sale sale) throws IdNotFoundException {
         return saleBiz.analyseSales(sale);
     }
     //**统计商品的购买情况**
-    public List<Purchase> getSalePurchaseRecords(Sale sale){
+    public List<Purchase> getSalePurchaseRecords(Sale sale) throws IdNotFoundException {
         return saleBiz.analysePurchases(sale);
     }
     //获取所有购买记录
@@ -131,7 +131,7 @@ public class MgrRole extends Role {
         return saleBiz.seePurchaseByDate(date);
     }
     //**下架商品**
-    public void removeSale(Sale sale){
+    public void removeSale(Sale sale) throws IdNotFoundException {
         saleBiz.remove(sale);
     }
     //查看下架的商品
@@ -139,9 +139,12 @@ public class MgrRole extends Role {
         return saleBiz.seeRemovedSale();
     }
     //**撤回下架的商品**
-    public void recoverRemovedSale(Sale sale){
+    public void recoverRemovedSale(Sale sale) throws IdNotFoundException {
         saleBiz.recover(sale);
     }
+
+    /*以上是超市管理员的商品业务*/
+
     //**统计以往的购买记录**
     public List<Purchase> getCustomerPurchaseRecords(Customer customer){
         return customerBiz.analysePurchases(customer);

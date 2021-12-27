@@ -4,6 +4,7 @@ import com.weidong.entity.Customer;
 import com.weidong.entity.Makeup;
 import com.weidong.entity.Purchase;
 import com.weidong.entity.Sale;
+import com.weidong.exception.IdNotFoundException;
 import com.weidong.role.superclass.Role;
 
 import java.util.ArrayList;
@@ -61,6 +62,7 @@ public class CustomerRole extends Role {
             return purchases.size();
         }
     }
+    /*以上为自定义内部类*/
 
     //查看超市所有商品
     public List<SaleMessage> seeSale(){
@@ -75,15 +77,18 @@ public class CustomerRole extends Role {
         return SaleMessage.confine(saleBiz.searchSaleLikeName(info));
     }
     //**统计商品的修改记录**
-    public List<SaleMessage> getSaleModifyRecords(Sale sale){
+    public List<SaleMessage> getSaleModifyRecords(Sale sale) throws IdNotFoundException {
         return SaleMessage.confine(saleBiz.analyseSales(sale));
     }
     //**统计商品的购买情况（商品数、人数）**
-    public PurchaseAnalysis getSalePurchaseRecords(Sale sale){
+    public PurchaseAnalysis getSalePurchaseRecords(Sale sale) throws IdNotFoundException {
         PurchaseAnalysis analysis = new PurchaseAnalysis();
         analysis.setPurchases(saleBiz.analysePurchases(sale));
         return analysis;
     }
+
+    /*以上是顾客的商品业务*/
+
     //**购买商品**
     public void buy(Purchase purchase){
         customerBiz.buy(purchase);

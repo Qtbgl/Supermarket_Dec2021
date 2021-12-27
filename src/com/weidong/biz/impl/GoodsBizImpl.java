@@ -4,7 +4,7 @@ import com.weidong.biz.GoodsBiz;
 import com.weidong.biz.impl.superclass.BusinessImpl;
 import com.weidong.entity.*;
 import com.weidong.entity.superclass.Supermarket_Member;
-import com.weidong.exception.AddAlreadyExistedException;
+import com.weidong.exception.AlreadyExistedAddException;
 import com.weidong.exception.IdNotFoundException;
 import com.weidong.exception.ItemCountException;
 
@@ -59,14 +59,14 @@ public class GoodsBizImpl extends BusinessImpl implements GoodsBiz {
     }
 
     @Override
-    public void importNew(Import _import) throws AddAlreadyExistedException, ItemCountException {
+    public void importNew(Import _import) throws AlreadyExistedAddException, ItemCountException {
         //增加供货记录
         Goods goods = _import.getGoods();
         String name = goods.getName();
         String type = goods.getType();
         Goods find = goodsSQL.queryGoodsByNameAndType(name, type);
         if (find!=null){
-            throw new AddAlreadyExistedException();
+            throw new AlreadyExistedAddException();
         }
         if (_import.getA() <= 0){
             throw new ItemCountException();
@@ -193,7 +193,7 @@ public class GoodsBizImpl extends BusinessImpl implements GoodsBiz {
 
 
     @Override
-    public void modifyGoods_etc(Goods goods) throws IdNotFoundException, AddAlreadyExistedException {
+    public void modifyGoods_etc(Goods goods) throws IdNotFoundException, AlreadyExistedAddException {
         //检查货物是否存在
         Goods find = goodsSQL.queryGoodsById(goods.getId());
         if (find == null){
@@ -202,7 +202,7 @@ public class GoodsBizImpl extends BusinessImpl implements GoodsBiz {
         //检查是否会重名
         Goods find1 = goodsSQL.queryGoodsByNameAndType(goods.getName(), goods.getType());
         if (find1 != null){
-            throw new AddAlreadyExistedException();
+            throw new AlreadyExistedAddException();
         }
 
         //都满足更改

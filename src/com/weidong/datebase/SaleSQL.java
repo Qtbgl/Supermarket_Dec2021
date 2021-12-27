@@ -6,21 +6,54 @@ import com.weidong.entity.Sale;
 import java.util.List;
 
 public interface SaleSQL {
-    //获取商品及其组成，即完整的商品
+    //获取商品及其组成货品，即完整的商品
     List<Sale> queryAllSale();
-    //Sale的name可重复
     Sale querySaleById(int id);
+    //Sale的name可重复
+    List<Sale> querySaleLikeName(String info);
     //获取完整的商品，和顾客购买记录
     List<Sale> queryAllSaleAndPurchase();
     Sale querySaleAndPurchaseById(int id);
+    //以上获取的商品都是未下架的，包括指定id的也满足。
 
-    //增加一种完整的商品，使用已有的货品id
+    //获取完整的商品，和顾客购买记录
+    List<Sale> queryAnySale();
+    Sale queryAnySaleById(int id);
+    List<Sale> queryAllAnySaleAndPurchase();
+    Sale queryAnySaleAndPurchaseById(int id);
+    //获取最新加入的商品的物理id。理论上是正上架的新代。
+    int queryLastSaleId();
+    //以上获取的无论是否下架。
+
+    //获取所有下架商品，都是新代，不获取迭代品。
+    List<Sale> queryAllDeletedSale();
+    //获取指定下架商品。不是新代，则返回无。
+    Sale queryDeletedSaleById(int id);
+    //获取迭代品。直接将入参id作为查找的pid。入参id商品可以上架，可以下架。
+    List<Sale> queryUpdatedSaleById(int id);
+    //以上获取的都是下架的。
+
+    /*增加单纯的商品，不管为了创建还是更新。
+    * 使用sale组成货品的id。不需要sale本身id。
+    * 如果是新代的商品，相关商品组的父id不更换。
+    * */
+    //使用商品信息，商品组成。需要组成货品的id
     int addSale(Sale sale);
-    //增加一笔购买记录，使用商品id，和顾客id
-    int addPurchase(Purchase purchase);
+    //重新上架某商品。【sql约束】只能是新代品，不能是迭代品。
+    int addSaleFromDeleteById(int id);
 
-    //不对任意属性直接更改，包括其组成成分。
 
-    //伪删除
-    int deleteSaleById(Sale sale);
+    /*原则：不对商品一般属性、组成成分更改。
+    * 情形：一般是增加新品时，将原新代淘汰，使其变成迭代品。
+    * 操作：只改指定原新代的pid，和修改所有原来迭代品的pid改成新的pid.
+    * 入参：原新代id，需要更改换成的pid。
+    * */
+    //只改指定id商品的pid。【sql约束】pid必须是一个新代。
+    int updateSalePid(int id, int pid);
+    //该所有原来是pid_former的商品的pid。【sql约束】同上。
+    int updateSalePidGroup(int pid_former, int pid_now);
+
+
+    //伪删除，下架标志位。
+    int deleteSaleById(int id);
 }

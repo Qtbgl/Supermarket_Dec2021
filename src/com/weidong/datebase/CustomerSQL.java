@@ -1,6 +1,7 @@
 package com.weidong.datebase;
 
 import com.weidong.entity.Customer;
+import com.weidong.entity.Purchase;
 
 import java.util.List;
 
@@ -14,19 +15,34 @@ public interface CustomerSQL {
     List<Customer> queryAllCustomerAndPurchase();
     Customer queryCustomerAndPurchaseByName(String name);
     Customer queryCustomerAndPurchaseById(int id);
+    //以上获取的都是未注销的顾客。
 
+    //获取仅仅顾客
+    List<Customer> queryAllAnyCustomer();
+    Customer queryAnyCustomerById(int id);
+    Customer queryAnyCustomerByName(String name);
+    List<Customer> queryAnyAllCustomerAndPurchase();
+    Customer queryAnyCustomerAndPurchaseById(int id);
+    //以上获取顾客无论是否注销
+
+    //获取注销的顾客。
+    List<Customer> queryDeletedCustomer();
+    Customer queryDeletedCustomerById(int id);
+    //以上获取的都是注销的顾客
+
+    //增加新顾客，不需要id。
     int addCustomer(Customer customer);
     //从伪删除处恢复
-    int addCustomerFromDeleteById(Customer customer);
+    int addCustomerFromDeleteById(int id);
+    /*增加一笔购买记录，使用商品id和顾客id，不需要Purchase的id。
+     * 不会影响货品实体的数量C。
+     * */
+    int addPurchase(Purchase purchase);
 
-    int updateCustomerName(String oldName, String newName);
-    int updateCustomerNameById(Customer customer);
-    int updateCustomerPassword(String name, String pwd);
-    int updateCustomerPasswordById(Customer customer);
-    int updateCustomerVip(String name, int vip);
-    int updateCustomerVipById(Customer customer);
+    //更改顾客姓名，密码，vip。通过顾客id，无论注销。
+    int updateCustomerById(Customer customer, int id);
 
     //伪删除
-    int deleteCustomer(String name);
-    int deleteCustomerById(Customer customer);
+    int deleteCustomerByName(String name);
+    int deleteCustomerById(int id);
 }

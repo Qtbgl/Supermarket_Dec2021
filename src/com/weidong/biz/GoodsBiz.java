@@ -4,7 +4,7 @@ import com.weidong.entity.Goods;
 import com.weidong.entity.Import;
 import com.weidong.entity.Remove;
 import com.weidong.entity.superclass.Supermarket_Member;
-import com.weidong.exception.AddAlreadyExistedException;
+import com.weidong.exception.AlreadyExistedAddException;
 import com.weidong.exception.IdNotFoundException;
 import com.weidong.exception.ItemCountException;
 
@@ -14,7 +14,7 @@ public interface GoodsBiz extends Recoverable,Analysable{
     //进口已有的货品，需要id
     public void importOld(Import _import) throws IdNotFoundException, ItemCountException;
     //进口新的货品，不需要id
-    public void importNew(Import _import) throws AddAlreadyExistedException, ItemCountException;
+    public void importNew(Import _import) throws AlreadyExistedAddException, ItemCountException;
     //查看货品进口记录，需要id
     public List<Import> seeGoodsImportRecords(Goods goods);
     //查看超市所有进口记录
@@ -41,7 +41,7 @@ public interface GoodsBiz extends Recoverable,Analysable{
     //查看超市所有的撤下记录
     public List<Remove> seeRemove();
     //修改货品其他，需要id
-    public void modifyGoods_etc(Goods goods) throws IdNotFoundException, AddAlreadyExistedException;
+    public void modifyGoods_etc(Goods goods) throws IdNotFoundException, AlreadyExistedAddException;
     //**统计货品相关商品**
     //**统计货品的购买情况**
 }
