@@ -1,5 +1,8 @@
 package com.weidong.role;
 
+import com.weidong.biz.CustomerBiz;
+import com.weidong.biz.GoodsBiz;
+import com.weidong.biz.SaleBiz;
 import com.weidong.entity.*;
 import com.weidong.exception.AlreadyExistedAddException;
 import com.weidong.exception.IdNotFoundException;
@@ -11,6 +14,10 @@ import java.util.Date;
 import java.util.List;
 
 public class MgrRole extends Role {
+    public MgrRole(CustomerBiz customerBiz, GoodsBiz goodsBiz, SaleBiz saleBiz) {
+        super(customerBiz, goodsBiz, saleBiz);
+    }
+
     //进口已有的货品，需要id
     public void importOldGoods(Import _import) throws ItemCountException, IdNotFoundException {
         goodsBiz.importOld(_import);
@@ -25,7 +32,7 @@ public class MgrRole extends Role {
     }
     //查看超市所有进口记录
     public List<Import> seeImportRecords(){
-        return goodsBiz.seeImportRecords();
+        return goodsBiz.seeAllImportRecords();
     }
     //查看超市所有货品
     public List<Goods> seeGoods(){
@@ -90,9 +97,9 @@ public class MgrRole extends Role {
     public void createSale(Sale sale) throws ItemCountException, ValueUnreasonException, IdNotFoundException {
         saleBiz.createSale(sale);
     }
-    //查看超市所有商品
+    //查看超市所有商品，上架中的。
     public List<Sale> seeSale(){
-        return saleBiz.seeSale();
+        return saleBiz.seeNowSale();
     }
     //查看指定商品，需要id
     public Sale seeSaleById(Sale sale){
@@ -116,20 +123,20 @@ public class MgrRole extends Role {
     }
     //**统计商品的修改记录**
     public List<Sale> getSaleModifyRecords(Sale sale) throws IdNotFoundException {
-        return saleBiz.analyseSales(sale);
+        return saleBiz.analysePastSales(sale);
     }
-    //**统计商品的购买情况**
+    //**统计商品的购买情况**，任何的商品。
     public List<Purchase> getSalePurchaseRecords(Sale sale) throws IdNotFoundException {
-        return saleBiz.analysePurchases(sale);
+        return saleBiz.analyseSalePurchases(sale);
     }
-    //获取所有购买记录
+    //获取所有购买记录，正上架的商品。
     public List<Purchase> seePurchase(){
-        return saleBiz.seePurchase();
+        return saleBiz.seeNowPurchase();
     }
     //获取某天的购买记录
-    public List<Purchase> seePurchaseByDate(Date date){
+    /*public List<Purchase> seePurchaseByDate(Date date){
         return saleBiz.seePurchaseByDate(date);
-    }
+    }*/
     //**下架商品**
     public void removeSale(Sale sale) throws IdNotFoundException {
         saleBiz.remove(sale);
@@ -154,7 +161,7 @@ public class MgrRole extends Role {
         return customerBiz.analyseSales(customer);
     }
     //**恢复注销的用户**
-    public void recoverCustomer(Customer customer){
+    public void recoverCustomer(Customer customer) throws IdNotFoundException {
         customerBiz.recover(customer);
     }
 }

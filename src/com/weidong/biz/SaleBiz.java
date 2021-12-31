@@ -19,10 +19,12 @@ public interface SaleBiz{
     public List<Sale> seeNowSale();
     //查看包括下架的商品
     public List<Sale> seeAnySale();
-    //查看指定商品，无论上架，需要id
+    //查看指定商品，无论上架包括迭代品，需要id。
     public Sale seeSaleById(Sale sale);
     //搜索某名称的商品，已上架
     public List<Sale> searchSaleLikeName(String info);
+    //搜索购买记录，通过某货品的名称
+    public List<Purchase> searchPurchaseLikeName(String info);
     //搜索含某货品的商品，需要id
     /*public List<Sale> searchSaleByGood(Goods goods);
     * 此业务与GoodsBiz的：List<Sale> analyseSales(Supermarket_Member member)
@@ -34,9 +36,11 @@ public interface SaleBiz{
     public void modifySalePrice(Sale sale) throws IdNotFoundException, ValueUnreasonException;
     //修改商品其他，需要id
     public void modifySaleName(Sale sale) throws IdNotFoundException, ValueUnreasonException;
-    //**统计商品的修改记录**，迭代品一定下架
+    //**统计商品的修改记录**，返回迭代品。新代，无论上架，不能是迭代品。
     public List<Sale> analysePastSales(Supermarket_Member member) throws IdNotFoundException;
-    //**统计商品的购买情况** ，无论上架
+    //**修改商品的购买记录**。同上，返回迭代品和它们的购买记录。
+    public List<Sale> analysePastSalesPurchase(Supermarket_Member member) throws IdNotFoundException;
+    //**统计商品的购买情况** ，无论上架，可以是迭代品。
     public List<Purchase> analyseSalePurchases(Supermarket_Member member) throws IdNotFoundException;
     //获取所有购买记录，现上架的
     public List<Purchase> seeNowPurchase();
@@ -47,7 +51,7 @@ public interface SaleBiz{
     //**下架商品**
     public void remove(Supermarket_Member member) throws IdNotFoundException;
     //查看下架的商品，不包括迭代品。
-    public List<Sale> seePastSale();
+    public List<Sale> seeRemovedSale();
     //**撤回下架的商品**
     public void recover(Supermarket_Member member) throws IdNotFoundException;
 }

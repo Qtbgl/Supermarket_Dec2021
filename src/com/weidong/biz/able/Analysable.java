@@ -1,9 +1,8 @@
-package com.weidong.biz;
+package com.weidong.biz.able;
 
 import com.weidong.entity.Purchase;
 import com.weidong.entity.Sale;
 import com.weidong.entity.superclass.Supermarket_Member;
-import com.weidong.exception.IdNotFoundException;
 
 import java.util.List;
 

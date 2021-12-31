@@ -4,10 +4,7 @@ import com.weidong.biz.CustomerBiz;
 import com.weidong.biz.impl.superclass.BusinessImpl;
 import com.weidong.entity.*;
 import com.weidong.entity.superclass.Supermarket_Member;
-import com.weidong.exception.AlreadyExistedAddException;
-import com.weidong.exception.IdNotFoundException;
-import com.weidong.exception.ItemCountException;
-import com.weidong.exception.ValueUnreasonException;
+import com.weidong.exception.*;
 
 import java.util.*;
 
@@ -49,19 +46,19 @@ public class CustomerBizImpl extends BusinessImpl implements CustomerBiz {
     }
 
     @Override
-    public void buy(Purchase purchase) throws IdNotFoundException, ValueUnreasonException, ItemCountException {
+    public void buy(int customerId, int saleId, int S) throws IdNotFoundException, ValueUnreasonException, ItemCountException {
         //检查顾客id存在，未注销顾客
-        Customer find_customer = customerSQL.queryCustomerById(purchase.getCustomer().getId());
+        Customer find_customer = customerSQL.queryCustomerById(customerId);
         if (find_customer == null) {
-            throw new IdNotFoundException();
+            throw new IdNotFoundException(IdNotFoundException.CUSTOMER);
         }
         //检查商品id存在
-        Sale find_sale = saleSQL.querySaleById(purchase.getSale().getId());
+        Sale find_sale = saleSQL.querySaleById(saleId);
         if (find_sale == null) {
-            throw new IdNotFoundException();
+            throw new IdNotFoundException(IdNotFoundException.SALE);
         }
         //检查购买数量S合理
-        if (purchase.getS() <= 0) {
+        if (S <= 0) {
             throw new ValueUnreasonException();
         }
         //检查商品的每一个货品的数量C，都充足于每一个对应N与S的乘积。
@@ -69,56 +66,76 @@ public class CustomerBizImpl extends BusinessImpl implements CustomerBiz {
         for (Makeup.Node node : makeup) {
             int C = node.getGoods().getC();
             int N = node.getN();
-            if (C < N * purchase.getS()) {
+            if (C < N * S) {
                 throw new ItemCountException();
             }
         }
-        //日期缺省加值
-        purchase.setDate(purchase.getDate()==null? new Date(): purchase.getDate());
         //以上购买条件：日期、顾客、商品、数量足够。
 
         //增加购买记录
-        int i = customerSQL.addPurchase(purchase);
+        int i = customerSQL.addPurchase(customerId,saleId,S,new Date());
         //更新每一个货品的C值
         for (Makeup.Node node : makeup) {
             Goods goods = node.getGoods();
             int C = goods.getC();
             int N = node.getN();
-            goods.setC(C - N * purchase.getS());
+            goods.setC(C - N * S);
             int i1 = goodsSQL.updateGoodsCById(goods, 0);
         }
         //不对货品进口，撤销记录处理。
     }
 
     @Override
-    public void register(Customer customer) throws AlreadyExistedAddException, ValueUnreasonException {
+    public Customer login(String name, String pwd) throws IdNotFoundException, PassFailedException {
+        //检查顾客是否存在，且未注销
+        Customer find = customerSQL.queryCustomerByName(name);
+        if (find == null) {
+            throw new IdNotFoundException();
+        }
+        //检查密码是否匹配
+        if (pwd.equals(find.getPwd())){
+            throw new PassFailedException();
+        }
+        return find;
+    }
+
+    @Override
+    public void register(String name, String pwd) throws AlreadyExistedAddException, ValueUnreasonException {
         //检查与已有顾客重名，无论注销
-        Customer find = customerSQL.queryAnyCustomerByName(customer.getName());
+        Customer find = customerSQL.queryAnyCustomerByName(name);
         if (find != null) {
             throw new AlreadyExistedAddException();
         }
         //检查密码合理
-        if (customer.getPwd().length() != Customer.pwdLength){
+        if (pwd.length() != Customer.pwdLength){
             throw new ValueUnreasonException();
         }
-        //vip缺省赋值。整型不需要。
+        //vip缺省赋值。默认=0
+        Customer customer = new Customer();
+        customer.setName(name);
+        customer.setPwd(pwd);
+        customer.setVip(0);
 
         //增加新顾客到数据库
         int i = customerSQL.addCustomer(customer);
     }
 
     @Override
-    public void modifyCustomerName(Customer customer) throws IdNotFoundException, AlreadyExistedAddException {
+    public void modifyCustomerName(int id, String name) throws IdNotFoundException, AlreadyExistedAddException {
         //检查顾客存在。未注销
-        Customer find = customerSQL.queryCustomerById(customer.getId());
+        Customer find = customerSQL.queryCustomerById(id);
         if (find == null) {
             throw new IdNotFoundException();
         }
         //检查是否会重名。无论注销
-        Customer find1 = customerSQL.queryAnyCustomerByName(customer.getName());
+        Customer find1 = customerSQL.queryAnyCustomerByName(name);
         if (find1 != null) {
             throw new AlreadyExistedAddException();
         }
+        //定义customer，用于SQL一次性写入。
+        Customer customer = new Customer();
+        customer.setId(id);
+        customer.setName(name);
         //密码不变
         customer.setPwd(find.getPwd());
         //vip不变
@@ -128,18 +145,23 @@ public class CustomerBizImpl extends BusinessImpl implements CustomerBiz {
     }
 
     @Override
-    public void modifyCustomerPassword(Customer customer) throws IdNotFoundException, ValueUnreasonException {
+    public void modifyCustomerPassword(int id, String pwd) throws IdNotFoundException, ValueUnreasonException {
         //检查顾客存在。未注销
-        Customer find = customerSQL.queryCustomerById(customer.getId());
+        Customer find = customerSQL.queryCustomerById(id);
         if (find == null) {
             throw new IdNotFoundException();
         }
-        //名称不变
-        customer.setName(find.getName());
         //检查新密码合理
-        if (customer.getPwd().length() != Customer.pwdLength) {
+        if (pwd.length() != Customer.pwdLength) {
             throw new ValueUnreasonException();
         }
+
+        //定义customer，用于SQL一次性写入。
+        Customer customer = new Customer();
+        customer.setId(id);
+        customer.setPwd(pwd);
+        //名称不变
+        customer.setName(find.getName());
         //vip不变
         customer.setVip(find.getVip());
         //更新使用：顾客姓名，密码，vip

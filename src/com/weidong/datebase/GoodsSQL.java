@@ -25,10 +25,15 @@ public interface GoodsSQL {
     Goods queryGoodsAndSaleAndCustomerById(int id);
     Goods queryGoodsAndSaleAndCustomerByNameAndType(String name, String type);
     //以上的是未遗弃的货品，logout=0
+    List<Goods> queryAllAnyGoods();
+    Goods queryAnyGoodsById(int id);
+    Goods queryAnyGoodsByNameAndType(String name, String type);
+    //以上获取货品不管遗弃
 
     //获取被标注为遗弃的货品，也会有供应和撤除记录。
     Goods queryForbiddenGoodsById(int id);
     List<Goods> queryForbiddenGoods();
+    //以上获取遗弃的货品。
 
     //增加货品进口记录，使用货品id
     int addImport(Import _import);

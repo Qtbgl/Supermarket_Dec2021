@@ -3,6 +3,7 @@ package com.weidong.datebase;
 import com.weidong.entity.Customer;
 import com.weidong.entity.Purchase;
 
+import java.util.Date;
 import java.util.List;
 
 public interface CustomerSQL {
@@ -37,7 +38,7 @@ public interface CustomerSQL {
     /*增加一笔购买记录，使用商品id和顾客id，不需要Purchase的id。
      * 不会影响货品实体的数量C。
      * */
-    int addPurchase(Purchase purchase);
+    int addPurchase(int customerId, int saleId, int S, Date date);
 
     //更改顾客姓名，密码，vip。通过顾客id，无论注销。
     int updateCustomerById(Customer customer, int id);

@@ -43,6 +43,7 @@ public class GoodsBizImpl extends BusinessImpl implements GoodsBiz {
     public void importOld(Import _import) throws IdNotFoundException, ItemCountException {
         //增加进口记录
         Goods goods = _import.getGoods();
+        //不能对已经遗弃的进行进口
         Goods find = goodsSQL.queryGoodsById(goods.getId());
         if (find == null){
             throw new IdNotFoundException();
@@ -64,7 +65,8 @@ public class GoodsBizImpl extends BusinessImpl implements GoodsBiz {
         Goods goods = _import.getGoods();
         String name = goods.getName();
         String type = goods.getType();
-        Goods find = goodsSQL.queryGoodsByNameAndType(name, type);
+        //遗弃货物也不能重名。
+        Goods find = goodsSQL.queryAnyGoodsByNameAndType(name, type);
         if (find!=null){
             throw new AlreadyExistedAddException();
         }
@@ -80,13 +82,23 @@ public class GoodsBizImpl extends BusinessImpl implements GoodsBiz {
 
     @Override
     public List<Import> seeGoodsImportRecords(Goods goods) {
-        Goods find = goodsSQL.queryGoodsById(goods.getId());
-        return find.getImports();
+        //不管是否遗弃的货品
+        Goods find = goodsSQL.queryAnyGoodsById(goods.getId());
+        List<Import> list = find.getImports();
+        //进口记录排序
+        list.sort(new Comparator<Import>() {
+            @Override
+            public int compare(Import o1, Import o2) {
+                return o1.getId() - o2.getId();
+            }
+        });
+        return list;
     }
 
     @Override
-    public List<Import> seeImportRecords() {
-        List<Goods> all = goodsSQL.queryAllGoods();
+    public List<Import> seeAllImportRecords() {
+        //不管是否遗弃的货品
+        List<Goods> all = goodsSQL.queryAllAnyGoods();
         List<Import> list = new ArrayList<>();
         for (Goods goods : all) {
             list.addAll(goods.getImports());
@@ -132,6 +144,12 @@ public class GoodsBizImpl extends BusinessImpl implements GoodsBiz {
     }
 
     @Override
+    public Goods seeAnyGoodsById(Goods goods) {
+        //不管遗弃
+        return goodsSQL.queryAnyGoodsById(goods.getId());
+    }
+
+    @Override
     public List<Goods> seeForbiddenGoods() {
         //遗弃，无日期，不排序
         return goodsSQL.queryForbiddenGoods();
@@ -161,7 +179,8 @@ public class GoodsBizImpl extends BusinessImpl implements GoodsBiz {
 
     @Override
     public List<Remove> seeGoodsRemove(Goods goods) {
-        Goods find = goodsSQL.queryGoodsById(goods.getId());
+        //不管遗弃
+        Goods find = goodsSQL.queryAnyGoodsById(goods.getId());
         List<Remove> list = find.getRemoves();
         //按移除id先后排序
         list.sort(new Comparator<Remove>() {
@@ -177,7 +196,8 @@ public class GoodsBizImpl extends BusinessImpl implements GoodsBiz {
     public List<Remove> seeRemove() {
         //撤下的货品记录
         List<Remove> list = new ArrayList<>();
-        List<Goods> all = goodsSQL.queryAllGoods();
+        //不管是否遗弃
+        List<Goods> all = goodsSQL.queryAllAnyGoods();
         for (Goods goods : all) {
             list.addAll(goods.getRemoves());
         }

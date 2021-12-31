@@ -56,7 +56,7 @@ public class SaleBizImpl extends BusinessImpl implements SaleBiz {
     }
 
     @Override
-    public List<Sale> seePastSale() {
+    public List<Sale> seeRemovedSale() {
         List<Sale> list = saleSQL.queryAllDeletedSale();
         //按sale的物理自增id排序
         list.sort(new Comparator<Sale>() {
@@ -88,12 +88,12 @@ public class SaleBizImpl extends BusinessImpl implements SaleBiz {
     @Override
     public List<Sale> seeAnySale() {
         //不需要排序，以后可能有需求对sale各种排序。
-        return saleSQL.queryAnySale();
+        return saleSQL.queryFrontSale();
     }
 
     @Override
     public Sale seeSaleById(Sale sale) {
-        //获取正上架的sale
+        //获取无论上架，包括迭代品的sale
         return saleSQL.queryAnySaleById(sale.getId());
     }
 
@@ -101,6 +101,22 @@ public class SaleBizImpl extends BusinessImpl implements SaleBiz {
     public List<Sale> searchSaleLikeName(String info) {
         //获取正上架的sale
         return saleSQL.querySaleLikeName(info);
+    }
+
+    @Override
+    public List<Purchase> searchPurchaseLikeName(String info){
+        List<Purchase> list = new ArrayList<>();
+        List<Sale> all = saleSQL.querySaleAndPurchaseLikeName(info);
+        for (Sale sale : all) {
+            list.addAll(sale.getCustomerPurchase());
+        }
+        list.sort(new Comparator<Purchase>() {
+            @Override
+            public int compare(Purchase o1, Purchase o2) {
+                return o1.getId() - o2.getId();
+            }
+        });
+        return list;
     }
 
     @Override
@@ -179,13 +195,33 @@ public class SaleBizImpl extends BusinessImpl implements SaleBiz {
     @Override
     public List<Sale> analysePastSales(Supermarket_Member member) throws IdNotFoundException {
         //商品的修改情况，即更新历史。
-        //检查商品是未下架的
-        Sale find = saleSQL.querySaleById(member.getId());
+        //检查商品存在，无论下架，但不能是迭代品。
+        Sale find = saleSQL.queryFrontSaleById(member.getId());
         if (find == null){
             throw new IdNotFoundException();
         }
-        //获取该商品所有的迭代品
-        List<Sale> list = saleSQL.queryUpdatedSaleById(member.getId());
+        //获取该商品所有的迭代品，无论下架。不获取购买记录。
+        List<Sale> list = saleSQL.queryOldSaleByPid(member.getId());
+        //排序，迭代品也有创建的物理编号
+        list.sort(new Comparator<Sale>() {
+            @Override
+            public int compare(Sale o1, Sale o2) {
+                return o1.getId() - o2.getId();
+            }
+        });
+        return list;
+    }
+
+    @Override
+    public List<Sale> analysePastSalesPurchase(Supermarket_Member member) throws IdNotFoundException{
+        //商品的修改情况，以及购买记录。
+        //检查商品存在，无论下架，但不能是迭代品。
+        Sale find = saleSQL.queryFrontSaleById(member.getId());
+        if (find == null){
+            throw new IdNotFoundException();
+        }
+        //获取该商品所有的迭代品，无论下架。不获取购买记录。
+        List<Sale> list = saleSQL.queryOldSaleAndPurchaseByPid(member.getId());
         //排序，迭代品也有创建的物理编号
         list.sort(new Comparator<Sale>() {
             @Override
@@ -198,7 +234,8 @@ public class SaleBizImpl extends BusinessImpl implements SaleBiz {
 
     @Override
     public List<Purchase> analyseSalePurchases(Supermarket_Member member) throws IdNotFoundException {
-        Sale find = saleSQL.querySaleById(member.getId());
+        //可以是迭代品，查看购买情况。
+        Sale find = saleSQL.queryAnySaleById(member.getId());
         if (find == null){
             throw new IdNotFoundException();
         }
@@ -238,7 +275,7 @@ public class SaleBizImpl extends BusinessImpl implements SaleBiz {
     public List<Purchase> seeAnyPurchase(){
         List<Purchase> list = new ArrayList<>();
         //获取无论上架
-        List<Sale> all = saleSQL.queryAllAnySaleAndPurchase();
+        List<Sale> all = saleSQL.queryAllFrontSaleAndPurchase();
         for (Sale sale : all) {
             List<Purchase> purchaseList = sale.getCustomerPurchase();
             list.addAll(purchaseList);

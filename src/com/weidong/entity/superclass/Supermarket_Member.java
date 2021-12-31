@@ -1,6 +1,8 @@
 package com.weidong.entity.superclass;
 
-abstract public class Supermarket_Member {
+public class Supermarket_Member {
+    protected int id;
+
     public int getId() {
         return id;
     }
@@ -9,5 +11,10 @@ abstract public class Supermarket_Member {
         this.id = id;
     }
 
-    protected int id;
+    public Supermarket_Member() {
+    }
+
+    public Supermarket_Member(int id) {
+        this.id = id;
+    }
 }

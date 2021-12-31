@@ -11,27 +11,32 @@ public interface SaleSQL {
     Sale querySaleById(int id);
     //Sale的name可重复
     List<Sale> querySaleLikeName(String info);
+    List<Sale> querySaleAndPurchaseLikeName(String info);
     //获取完整的商品，和顾客购买记录
     List<Sale> queryAllSaleAndPurchase();
     Sale querySaleAndPurchaseById(int id);
     //以上获取的商品都是未下架的，包括指定id的也满足。
 
-    //获取完整的商品，和顾客购买记录
-    List<Sale> queryAnySale();
-    Sale queryAnySaleById(int id);
-    List<Sale> queryAllAnySaleAndPurchase();
-    Sale queryAnySaleAndPurchaseById(int id);
+    //获取下架或上架的所有新代。
+    List<Sale> queryFrontSale();
+    Sale queryFrontSaleById(int id);
+    List<Sale> queryAllFrontSaleAndPurchase();
     //获取最新加入的商品的物理id。理论上是正上架的新代。
     int queryLastSaleId();
-    //以上获取的无论是否下架。
+    //以上获取无论上架，新代商品，不获取迭代品。
 
     //获取所有下架商品，都是新代，不获取迭代品。
     List<Sale> queryAllDeletedSale();
     //获取指定下架商品。不是新代，则返回无。
     Sale queryDeletedSaleById(int id);
-    //获取迭代品。直接将入参id作为查找的pid。入参id商品可以上架，可以下架。
-    List<Sale> queryUpdatedSaleById(int id);
     //以上获取的都是下架的。
+
+    Sale queryAnySaleById(int id);
+    Sale queryAnySaleAndPurchaseById(int id);
+    //获取迭代品。直接将入参pid作为查找的pid。入参id商品可以上架，可以下架。
+    List<Sale> queryOldSaleByPid(int pid);
+    List<Sale> queryOldSaleAndPurchaseByPid(int pid);
+    //以上可以获取迭代品。
 
     /*增加单纯的商品，不管为了创建还是更新。
     * 使用sale组成货品的id。不需要sale本身id。

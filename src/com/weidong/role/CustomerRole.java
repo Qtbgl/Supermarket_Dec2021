@@ -1,121 +1,97 @@
 package com.weidong.role;
 
+import com.weidong.biz.CustomerBiz;
+import com.weidong.biz.GoodsBiz;
+import com.weidong.biz.SaleBiz;
 import com.weidong.entity.Customer;
 import com.weidong.entity.Makeup;
 import com.weidong.entity.Purchase;
 import com.weidong.entity.Sale;
-import com.weidong.exception.IdNotFoundException;
+import com.weidong.entity.superclass.Supermarket_Member;
+import com.weidong.exception.*;
 import com.weidong.role.superclass.Role;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class CustomerRole extends Role {
-    //限制顾客的访问权限
+    //登录的顾客，记录下来。
+    Customer customer;
 
-    public static class SaleMessage extends Sale{
-        @Override
-        public Makeup getSaleMakeup() {
-            return null;
-        }
-
-        @Override
-        public List<Purchase> getCustomerPurchase() {
-            return null;
-        }
-
-        public static SaleMessage confine(Sale sale){
-            SaleMessage s = new SaleMessage();
-            s.setCustomerPurchase(sale.getCustomerPurchase());
-            s.setName(sale.getName());
-            s.setPrice(sale.getPrice());
-            s.setSaleMakeup(sale.getSaleMakeup());
-            return s;
-        }
-
-        public static List<SaleMessage> confine(List<Sale> sales){
-            List<SaleMessage> list = new ArrayList<>();
-            for (Sale sale : sales) {
-                list.add(confine(sale));
-            }
-            return list;
-        }
+    public Customer getCustomer() {
+        return customer;
     }
 
-    public static class PurchaseAnalysis {
-        private List<Purchase> purchases;
-
-        public void setPurchases(List<Purchase> purchases) {
-            this.purchases = purchases;
-        }
-
-        //统计购买总数
-        public int countBuyAmount(){
-            int countS = 0;
-            for (Purchase purchase : purchases) {
-                countS+=purchase.getS();
-            }
-           return countS;
-        }
-        //统计购买人数
-        public int countPeople(){
-            return purchases.size();
-        }
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
     }
-    /*以上为自定义内部类*/
 
-    //查看超市所有商品
-    public List<SaleMessage> seeSale(){
-       return SaleMessage.confine(saleBiz.seeSale());
+    public CustomerRole(CustomerBiz customerBiz, GoodsBiz goodsBiz, SaleBiz saleBiz, Customer customer) {
+        super(customerBiz, goodsBiz, saleBiz);
+        this.customer = customer;
     }
-    //查看指定商品，需要id
-    public SaleMessage seeSaleById(Sale sale){
-        return SaleMessage.confine(saleBiz.seeSaleById(sale));
+
+    //查看超市所有商品，上架中的。
+    public List<Sale> seeSale(){
+       return saleBiz.seeNowSale();
+    }
+    //查看指定商品，需要id，无论上架
+    public Sale seeSaleById(Sale sale){
+        return saleBiz.seeSaleById(sale);
     }
     //搜索某名称的商品
-    public List<SaleMessage> searchSaleLikeName(String info){
-        return SaleMessage.confine(saleBiz.searchSaleLikeName(info));
+    public List<Sale> searchSaleLikeName(String info){
+        return saleBiz.searchSaleLikeName(info);
     }
-    //**统计商品的修改记录**
-    public List<SaleMessage> getSaleModifyRecords(Sale sale) throws IdNotFoundException {
-        return SaleMessage.confine(saleBiz.analyseSales(sale));
+    //搜索购买记录，通过某货品的名称。
+    public List<Purchase> searchPurchaseLikeName(String info){
+        return saleBiz.searchPurchaseLikeName(info);
     }
-    //**统计商品的购买情况（商品数、人数）**
-    public PurchaseAnalysis getSalePurchaseRecords(Sale sale) throws IdNotFoundException {
-        PurchaseAnalysis analysis = new PurchaseAnalysis();
-        analysis.setPurchases(saleBiz.analysePurchases(sale));
-        return analysis;
+    //**统计商品的修改记录**。无论上架，但必须新代。
+    public List<Sale> getSaleModifyRecords(int id) throws IdNotFoundException {
+        return saleBiz.analysePastSales(new Supermarket_Member(id));
+    }
+    //**统计:修改商品的购买记录**，返回迭代品，包括购买记录。
+    public List<Sale> getPurchasedSaleModifyRecords(int id) throws IdNotFoundException {
+        return saleBiz.analysePastSalesPurchase(new Supermarket_Member(id));
     }
 
-    /*以上是顾客的商品业务*/
+    //**统计商品的购买情况**
+    public List<Purchase> getSalePurchaseRecords(Sale sale) throws IdNotFoundException {
+        return saleBiz.analyseSalePurchases(sale);
+    }
+
+    /*以上是商品业务*/
 
     //**购买商品**
-    public void buy(Purchase purchase){
-        customerBiz.buy(purchase);
+    public void buy(int customerId, int saleId, int S) throws ItemCountException, ValueUnreasonException, IdNotFoundException {
+        customerBiz.buy(customerId,saleId,S);
     }
     //**统计以往的购买记录**
-    public List<Purchase> getCustomerPurchaseRecords(Customer customer){
-        List<Purchase> ps = customerBiz.analysePurchases(customer);
-        for (Purchase p : ps) {
-            Sale s = p.getSale();
-            p.setSale(SaleMessage.confine(s));
-        }
-        return ps;
+    public List<Purchase> getCustomerPurchaseRecords(int id){
+        return customerBiz.analysePurchases(new Supermarket_Member(id));
     }
     //**统计购买过的商品**
-    public List<SaleMessage> getCustomerSaleRecords(Customer customer){
-        return SaleMessage.confine(customerBiz.analyseSales(customer));
+    public List<Sale> getCustomerSaleRecords(Customer customer){
+        return customerBiz.analyseSales(customer);
     }
     //修改名字，需要id
-    public void modifyCustomerName(Customer customer){
-        customerBiz.modifyCustomerName(customer);
+    public void modifyCustomerName(int id, String name) throws AlreadyExistedAddException, IdNotFoundException {
+        customerBiz.modifyCustomerName(id,name);
     }
     //修改密码，需要id
-    public void modifyCustomerPassword(Customer customer){
-        customerBiz.modifyCustomerPassword(customer);
+    public void modifyCustomerPassword(int id, String pwd) throws ValueUnreasonException, IdNotFoundException {
+        customerBiz.modifyCustomerPassword(id,pwd);
     }
+    //登录
+    public Customer login(String name, String pwd) throws IdNotFoundException, PassFailedException {
+        return customerBiz.login(name,pwd);
+    }
+
     //**注销**
-    public void deregister(Customer customer){
-        customerBiz.remove(customer);
+    public void deregister(int id) throws IdNotFoundException {
+        customerBiz.remove(new Supermarket_Member(id));
+        //customer的内存记录清空。
+        //this.customer = null; //不做
     }
 }

@@ -1,4 +1,4 @@
-package com.weidong.biz;
+package com.weidong.biz.able;
 
 import com.weidong.entity.Purchase;
 
