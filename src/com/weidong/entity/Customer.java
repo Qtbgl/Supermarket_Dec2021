@@ -14,6 +14,17 @@ public class Customer extends Supermarket_Member {
     //与数据库约束相同
     public static final int pwdLength = 6;
 
+    @Override
+    public String toString() {
+        return "Customer{" +
+                "name='" + name + '\'' +
+                ", pwd='" + pwd + '\'' +
+                ", vip=" + vip +
+                ", salePurchase=" + salePurchase +
+                ", id=" + id +
+                '}';
+    }
+
     public String getName() {
         return name;
     }

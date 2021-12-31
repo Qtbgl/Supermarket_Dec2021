@@ -25,7 +25,7 @@ public class SQLServerConnection {
 
         Statement stmt = conn.createStatement();
         ResultSet rs = stmt.executeQuery("select * from goods");
-
+        System.out.println(rs);
 
 
         conn.close();
