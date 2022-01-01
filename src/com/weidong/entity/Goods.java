@@ -19,6 +19,19 @@ public class Goods extends Supermarket_Member {
     //货品撤除记录
     List<Remove> removes;
 
+    @Override
+    public String toString() {
+        return "Goods{" +
+                "name='" + name + '\'' +
+                ", type='" + type + '\'' +
+                ", C=" + C +
+                ", composeSale=" + composeSale +
+                ", imports=" + imports +
+                ", removes=" + removes +
+                ", id=" + id +
+                '}';
+    }
+
     public String getName() {
         return name;
     }

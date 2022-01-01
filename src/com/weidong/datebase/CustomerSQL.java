@@ -7,6 +7,11 @@ import java.util.Date;
 import java.util.List;
 
 public interface CustomerSQL {
+    //sql命令中拼接使用。
+    final public static String IS_NORMAL_CUSTOMER = "customer_vip < 3 and logout = 0";
+    final public static String IS_LOGOUT_CUSTOMER = "customer_vip < 3 and logout = 1";
+    final public static String IS_ANY_CUSTOMER = "customer_vip < 3";
+    final public static String IS_SUPERMARKET_MANAGER = "customer_vip = 3 and logout = 0";
     //获取仅仅顾客
     List<Customer> queryAllCustomer();
     //Customer的name不重复

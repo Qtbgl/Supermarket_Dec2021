@@ -14,6 +14,17 @@ public class Sale extends Supermarket_Member {
     //list：有次序的顾客记录
     List<Purchase> customerPurchase;
 
+    @Override
+    public String toString() {
+        return "Sale{" +
+                "name='" + name + '\'' +
+                ", saleMakeup=" + saleMakeup +
+                ", price=" + price +
+                ", customerPurchase=" + customerPurchase +
+                ", id=" + id +
+                '}';
+    }
+
     public String getName() {
         return name;
     }
