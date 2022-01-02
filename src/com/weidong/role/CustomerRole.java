@@ -36,8 +36,8 @@ public class CustomerRole extends Role {
        return saleBiz.seeNowSale();
     }
     //查看指定商品，需要id，无论上架
-    public Sale seeSaleById(Sale sale){
-        return saleBiz.seeSaleById(sale);
+    public Sale seeSaleById(int id){
+        return saleBiz.seeSaleById(id);
     }
     //搜索某名称的商品
     public List<Sale> searchSaleLikeName(String info){

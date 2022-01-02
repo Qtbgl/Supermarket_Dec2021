@@ -7,6 +7,9 @@ import com.weidong.entity.Remove;
 import java.util.List;
 
 public interface GoodsSQL {
+    final public static String IS_NORMAL_GOODS = "logout = 0";
+    final public static String IS_DELETED_GOODS = "logout = 1";
+    final public static String IS_ANY_GOODS = "1 = 1";
     //获取货品，包含它的供应和撤除记录
     List<Goods> queryAllGoods();
     //Goods的name和type组合后唯一
@@ -25,6 +28,7 @@ public interface GoodsSQL {
     Goods queryGoodsAndSaleAndCustomerById(int id);
     Goods queryGoodsAndSaleAndCustomerByNameAndType(String name, String type);
     //以上的是未遗弃的货品，logout=0
+
     List<Goods> queryAllAnyGoods();
     Goods queryAnyGoodsById(int id);
     Goods queryAnyGoodsByNameAndType(String name, String type);

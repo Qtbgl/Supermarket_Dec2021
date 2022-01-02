@@ -92,10 +92,12 @@ public class WelcomeJFrame extends JFrame {
         //事件监听-3
         registerButton.addActionListener(new registerRespond());
 
+    }
+
+    private void init(){
         //界面功能调用-1
         /*List<Sale> list = user.seeSale();
         this.printToSaleTable(list);*/
-
     }
 
     //本类的辅助功能

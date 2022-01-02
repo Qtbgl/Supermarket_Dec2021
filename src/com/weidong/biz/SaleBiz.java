@@ -20,7 +20,7 @@ public interface SaleBiz{
     //查看包括下架的商品
     public List<Sale> seeAnySale();
     //查看指定商品，无论上架包括迭代品，需要id。
-    public Sale seeSaleById(Sale sale);
+    public Sale seeSaleById(int id);
     //搜索某名称的商品，已上架
     public List<Sale> searchSaleLikeName(String info);
     //搜索购买记录，通过某货品的名称
@@ -31,7 +31,7 @@ public interface SaleBiz{
     * **统计货品相关商品** 功能重复，在GoodsBiz实现类可用。
     * */
     //修改商品组合，需要id
-    public void modifySaleMakeup(Sale sale) throws IdNotFoundException, ItemCountException;
+    public void modifySaleMakeup(int saleId, Makeup saleMakeup) throws IdNotFoundException, ItemCountException;
     //修改商品价格，需要id
     public void modifySalePrice(Sale sale) throws IdNotFoundException, ValueUnreasonException;
     //修改商品其他，需要id

@@ -2,6 +2,9 @@ package com.weidong.biz.impl;
 
 import com.weidong.biz.SaleBiz;
 import com.weidong.biz.impl.superclass.BusinessImpl;
+import com.weidong.datebase.CustomerSQL;
+import com.weidong.datebase.GoodsSQL;
+import com.weidong.datebase.SaleSQL;
 import com.weidong.entity.Goods;
 import com.weidong.entity.Makeup;
 import com.weidong.entity.Purchase;
@@ -14,13 +17,19 @@ import com.weidong.exception.ValueUnreasonException;
 import java.util.*;
 
 public class SaleBizImpl extends BusinessImpl implements SaleBiz {
+    public SaleBizImpl(CustomerSQL customerSQL, GoodsSQL goodsSQL, SaleSQL saleSQL) {
+        super(customerSQL, goodsSQL, saleSQL);
+    }
+
     /*检查商品的saleMakeup属性：
      * 1.检查每一个货品id在数据库中已存在实体，不存在则抛出异常。
      * 2.检查每一个货品组成数量N是否大于0，否则抛出异常。
      * */
-    private void checkSaleMakeup(Sale sale) throws IdNotFoundException, ItemCountException {
-        Makeup saleMakeup = sale.getSaleMakeup();
+    private void checkSaleMakeup(Makeup saleMakeup) throws IdNotFoundException, ItemCountException {
         Set<Makeup.Node> makeup = saleMakeup.getMakeup();
+        if (makeup.size() == 0){ //商品必须至少有一个货品。
+            throw new ItemCountException();
+        }
         for (Makeup.Node node : makeup) {
             //检查组成的货品id是否都存在
             if (goodsSQL.queryGoodsById(node.getGoods().getId()) == null) {
@@ -37,7 +46,7 @@ public class SaleBizImpl extends BusinessImpl implements SaleBiz {
     public void recover(Supermarket_Member member) throws IdNotFoundException {
         //将指定id的下架商品，变为未下架商品。
         //检查是已下架的商品
-        Sale find = saleSQL.queryDeletedSaleById(member.getId());
+        Sale find = saleSQL.queryFrontDeletedSaleById(member.getId());
         if (find == null) {
             throw new IdNotFoundException();
         }
@@ -57,12 +66,12 @@ public class SaleBizImpl extends BusinessImpl implements SaleBiz {
 
     @Override
     public List<Sale> seeRemovedSale() {
-        List<Sale> list = saleSQL.queryAllDeletedSale();
+        List<Sale> list = saleSQL.queryFrontDeletedSale();
         //按sale的物理自增id排序
         list.sort(new Comparator<Sale>() {
             @Override
             public int compare(Sale o1, Sale o2) {
-                return o1.getId() - o2.getId();
+                return o2.getId() - o1.getId();
             }
         });
         return list;
@@ -71,18 +80,30 @@ public class SaleBizImpl extends BusinessImpl implements SaleBiz {
     @Override
     public void createSale(Sale sale) throws IdNotFoundException, ItemCountException, ValueUnreasonException {
         //检查相关的货品，是否存在。组成数量N是否合理。
-        this.checkSaleMakeup(sale);
+        this.checkSaleMakeup(sale.getSaleMakeup());
         //商品自身的信息：名称可重，价格小数。不需要商品id
         if (sale.getPrice() <0 || sale.getName() == null){
             throw new ValueUnreasonException();
         }
         int i = saleSQL.addSale(sale);
+        int lastId = saleSQL.queryLastSaleId(); //逻辑上，获取的是新商品的物理id。
+        //增加相关货品组成记录。set类型的makeup已在上处检查。
+        int i1 = saleSQL.addSaleMakeup(lastId, sale.getSaleMakeup().getMakeup());
+
     }
 
     @Override
     public List<Sale> seeNowSale() {
         //不需要排序，以后可能有需求对sale各种排序。
-        return saleSQL.queryAllSale();
+        // 按创建先后排序。
+        List<Sale> list = saleSQL.queryAllSale();
+        list.sort(new Comparator<Sale>() {
+            @Override
+            public int compare(Sale o1, Sale o2) {
+                return o2.getId() - o1.getId();
+            }
+        });
+        return list;
     }
 
     @Override
@@ -92,9 +113,9 @@ public class SaleBizImpl extends BusinessImpl implements SaleBiz {
     }
 
     @Override
-    public Sale seeSaleById(Sale sale) {
+    public Sale seeSaleById(int id) {
         //获取无论上架，包括迭代品的sale
-        return saleSQL.queryAnySaleById(sale.getId());
+        return saleSQL.queryAnySaleById(id);
     }
 
     @Override
@@ -113,21 +134,24 @@ public class SaleBizImpl extends BusinessImpl implements SaleBiz {
         list.sort(new Comparator<Purchase>() {
             @Override
             public int compare(Purchase o1, Purchase o2) {
-                return o1.getId() - o2.getId();
+                return o2.getId() - o1.getId();
             }
         });
         return list;
     }
 
     @Override
-    public void modifySaleMakeup(Sale sale) throws IdNotFoundException, ItemCountException{
+    public void modifySaleMakeup(int saleId, Makeup saleMakeup) throws IdNotFoundException, ItemCountException{
         //检查商品是否有原id
-        Sale find = saleSQL.querySaleById(sale.getId());
+        Sale find = saleSQL.querySaleById(saleId);
         if (find == null) {
             throw new IdNotFoundException();
         }
+        Sale sale = new Sale();
+        sale.setId(saleId);
+        sale.setSaleMakeup(saleMakeup);
         //检查货品完整合理。
-        this.checkSaleMakeup(sale);
+        this.checkSaleMakeup(saleMakeup);
         //使名称与原来相同
         sale.setName(find.getName());
         //使价格与原来相同
@@ -137,6 +161,9 @@ public class SaleBizImpl extends BusinessImpl implements SaleBiz {
         //加入一个新商品。数据库中多了一个正上架、无更新关联的新代。
         int i = saleSQL.addSale(sale);
         int lastId = saleSQL.queryLastSaleId(); //逻辑上，获取的是新商品的物理id。
+        // 增加相关货品组成记录。set类型的makeup已在上处检查。
+        int i4 = saleSQL.addSaleMakeup(lastId, sale.getSaleMakeup().getMakeup());
+
         //原新代下架，才能换掉。
         int i1 = saleSQL.deleteSaleById(sale.getId());
         int i2 = saleSQL.updateSalePid(sale.getId(), lastId);
@@ -162,10 +189,15 @@ public class SaleBizImpl extends BusinessImpl implements SaleBiz {
         //满足货品组成、价格、名称后。
 
         saleSQL.addSale(sale);
-        int lastId = saleSQL.queryLastSaleId();
-        saleSQL.deleteSaleById(sale.getId());
-        saleSQL.updateSalePid(sale.getId(),lastId);
-        saleSQL.updateSalePidGroup(sale.getId(),lastId);
+        int lastId = saleSQL.queryLastSaleId(); //逻辑上，获取的是新商品的物理id。
+        // 增加相关货品组成记录。set类型的makeup已在上处检查。
+        int i3 = saleSQL.addSaleMakeup(lastId, sale.getSaleMakeup().getMakeup());
+
+        //原新代下架，才能换掉。
+        int i = saleSQL.deleteSaleById(sale.getId());
+        int i1 = saleSQL.updateSalePid(sale.getId(), lastId);
+        //修改原更新组的pid。
+        int i2 = saleSQL.updateSalePidGroup(sale.getId(), lastId);
     }
 
     @Override
@@ -186,10 +218,15 @@ public class SaleBizImpl extends BusinessImpl implements SaleBiz {
         //满足货品组成、价格、名称后。
 
         saleSQL.addSale(sale);
-        int lastId = saleSQL.queryLastSaleId();
-        saleSQL.deleteSaleById(sale.getId());
-        saleSQL.updateSalePid(sale.getId(),lastId);
-        saleSQL.updateSalePidGroup(sale.getId(),lastId);
+        int lastId = saleSQL.queryLastSaleId(); //逻辑上，获取的是新商品的物理id。
+        // 增加相关货品组成记录。set类型的makeup已在上处检查。
+        int i3 = saleSQL.addSaleMakeup(lastId, sale.getSaleMakeup().getMakeup());
+
+        //原新代下架，才能换掉。
+        int i = saleSQL.deleteSaleById(sale.getId());
+        int i1 = saleSQL.updateSalePid(sale.getId(), lastId);
+        //修改原更新组的pid。
+        int i2 = saleSQL.updateSalePidGroup(sale.getId(), lastId);
     }
 
     @Override
@@ -206,7 +243,7 @@ public class SaleBizImpl extends BusinessImpl implements SaleBiz {
         list.sort(new Comparator<Sale>() {
             @Override
             public int compare(Sale o1, Sale o2) {
-                return o1.getId() - o2.getId();
+                return o2.getId() - o1.getId();
             }
         });
         return list;
@@ -226,7 +263,7 @@ public class SaleBizImpl extends BusinessImpl implements SaleBiz {
         list.sort(new Comparator<Sale>() {
             @Override
             public int compare(Sale o1, Sale o2) {
-                return o1.getId() - o2.getId();
+                return o2.getId() - o1.getId();
             }
         });
         return list;
@@ -246,7 +283,7 @@ public class SaleBizImpl extends BusinessImpl implements SaleBiz {
         list.sort(new Comparator<Purchase>() {
             @Override
             public int compare(Purchase o1, Purchase o2) {
-                return o1.getId() - o2.getId();
+                return o2.getId() - o1.getId();
             }
         });
         return list;
@@ -265,7 +302,7 @@ public class SaleBizImpl extends BusinessImpl implements SaleBiz {
         list.sort(new Comparator<Purchase>() {
             @Override
             public int compare(Purchase o1, Purchase o2) {
-                return o1.getId() - o2.getId();
+                return o2.getId() - o1.getId();
             }
         });
         return list;
@@ -284,7 +321,7 @@ public class SaleBizImpl extends BusinessImpl implements SaleBiz {
         list.sort(new Comparator<Purchase>() {
             @Override
             public int compare(Purchase o1, Purchase o2) {
-                return o1.getId() - o2.getId();
+                return o2.getId() - o1.getId();
             }
         });
         return list;

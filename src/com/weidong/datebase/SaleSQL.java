@@ -1,11 +1,18 @@
 package com.weidong.datebase;
 
+import com.weidong.entity.Makeup;
 import com.weidong.entity.Purchase;
 import com.weidong.entity.Sale;
 
 import java.util.List;
+import java.util.Set;
 
 public interface SaleSQL {
+    final public static String IS_NORMAL_SALE = "sale_pid is null and logout = 0";
+    final public static String IS_FRONT_DELETED_SALE = "sale_pid is null and logout = 1";
+    final public static String IS_FRONT_SALE = "sale_pid is null";
+    final public static String IS_OLD_SALE = "sale_pid is not null and logout = 1";
+    final public static String IS_ANY_SALE = "1 = 1"; //任意商品，无约束。
     //获取商品及其组成货品，即完整的商品
     List<Sale> queryAllSale();
     Sale querySaleById(int id);
@@ -17,7 +24,7 @@ public interface SaleSQL {
     Sale querySaleAndPurchaseById(int id);
     //以上获取的商品都是未下架的，包括指定id的也满足。
 
-    //获取下架或上架的所有新代。
+    //获取无论下架的所有新代。
     List<Sale> queryFrontSale();
     Sale queryFrontSaleById(int id);
     List<Sale> queryAllFrontSaleAndPurchase();
@@ -26,9 +33,9 @@ public interface SaleSQL {
     //以上获取无论上架，新代商品，不获取迭代品。
 
     //获取所有下架商品，都是新代，不获取迭代品。
-    List<Sale> queryAllDeletedSale();
+    List<Sale> queryFrontDeletedSale();
     //获取指定下架商品。不是新代，则返回无。
-    Sale queryDeletedSaleById(int id);
+    Sale queryFrontDeletedSaleById(int id);
     //以上获取的都是下架的。
 
     Sale queryAnySaleById(int id);
@@ -38,12 +45,15 @@ public interface SaleSQL {
     List<Sale> queryOldSaleAndPurchaseByPid(int pid);
     //以上可以获取迭代品。
 
-    /*增加单纯的商品，不管为了创建还是更新。
-    * 使用sale组成货品的id。不需要sale本身id。
-    * 如果是新代的商品，相关商品组的父id不更换。
+    /*增加单纯的，不完整的商品，不管为了创建还是更新。插入后是：新代上架商品。
+    * 备注：不使用sale组成货品id，也不需要sale本身id。
+    * 警告：如果是新代的商品，相关商品组的父id不更换。
+    *      且货品组成，不会插入数据库makeup表中。
+    *      请另外处理。
     * */
-    //使用商品信息，商品组成。需要组成货品的id
     int addSale(Sale sale);
+    //增加一批货品组成记录，与上一个方法搭配使用。需要sale的id，和makeup封装的各货品的id。
+    int addSaleMakeup(int saleId, Set<Makeup.Node> makeup);
     //重新上架某商品。【sql约束】只能是新代品，不能是迭代品。
     int addSaleFromDeleteById(int id);
 
@@ -55,7 +65,7 @@ public interface SaleSQL {
     * */
     //只改指定id商品的pid。【sql约束】pid必须是一个新代。
     int updateSalePid(int id, int pid);
-    //该所有原来是pid_former的商品的pid。【sql约束】同上。
+    //改所有原来是pid_former的商品的pid。【sql约束】同上。
     int updateSalePidGroup(int pid_former, int pid_now);
 
 

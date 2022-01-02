@@ -2,6 +2,9 @@ package com.weidong.biz.impl;
 
 import com.weidong.biz.CustomerBiz;
 import com.weidong.biz.impl.superclass.BusinessImpl;
+import com.weidong.datebase.CustomerSQL;
+import com.weidong.datebase.GoodsSQL;
+import com.weidong.datebase.SaleSQL;
 import com.weidong.entity.*;
 import com.weidong.entity.superclass.Supermarket_Member;
 import com.weidong.exception.*;
@@ -9,6 +12,10 @@ import com.weidong.exception.*;
 import java.util.*;
 
 public class CustomerBizImpl extends BusinessImpl implements CustomerBiz {
+    public CustomerBizImpl(CustomerSQL customerSQL, GoodsSQL goodsSQL, SaleSQL saleSQL) {
+        super(customerSQL, goodsSQL, saleSQL);
+    }
+
     @Override
     public List<Sale> analyseSales(Supermarket_Member member) {
         //无论注销
@@ -39,7 +46,7 @@ public class CustomerBizImpl extends BusinessImpl implements CustomerBiz {
         list.sort(new Comparator<Purchase>() {
             @Override
             public int compare(Purchase o1, Purchase o2) {
-                return o1.getId() - o2.getId();
+                return o2.getId() - o1.getId();
             }
         });
         return list;

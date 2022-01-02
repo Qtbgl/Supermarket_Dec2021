@@ -102,16 +102,16 @@ public class MgrRole extends Role {
         return saleBiz.seeNowSale();
     }
     //查看指定商品，需要id
-    public Sale seeSaleById(Sale sale){
-        return saleBiz.seeSaleById(sale);
+    public Sale seeSaleById(int id){
+        return saleBiz.seeSaleById(id);
     }
     //搜索某名称的商品
     public List<Sale> searchSaleLikeName(String info){
         return saleBiz.searchSaleLikeName(info);
     }
     //修改商品组合，需要id
-    public void modifySaleMakeup(Sale sale) throws ItemCountException, IdNotFoundException {
-        saleBiz.modifySaleMakeup(sale);
+    public void modifySaleMakeup(int saleId, Makeup saleMakeup) throws ItemCountException, IdNotFoundException {
+        saleBiz.modifySaleMakeup(saleId,saleMakeup);
     }
     //修改商品价格，需要id
     public void modifySalePrice(Sale sale) throws ValueUnreasonException, IdNotFoundException {

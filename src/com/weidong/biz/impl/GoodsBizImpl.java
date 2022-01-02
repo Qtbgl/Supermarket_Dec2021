@@ -2,6 +2,9 @@ package com.weidong.biz.impl;
 
 import com.weidong.biz.GoodsBiz;
 import com.weidong.biz.impl.superclass.BusinessImpl;
+import com.weidong.datebase.CustomerSQL;
+import com.weidong.datebase.GoodsSQL;
+import com.weidong.datebase.SaleSQL;
 import com.weidong.entity.*;
 import com.weidong.entity.superclass.Supermarket_Member;
 import com.weidong.exception.AlreadyExistedAddException;
@@ -11,6 +14,10 @@ import com.weidong.exception.ItemCountException;
 import java.util.*;
 
 public class GoodsBizImpl extends BusinessImpl implements GoodsBiz {
+    public GoodsBizImpl(CustomerSQL customerSQL, GoodsSQL goodsSQL, SaleSQL saleSQL) {
+        super(customerSQL, goodsSQL, saleSQL);
+    }
+
     @Override
     public List<Sale> analyseSales(Supermarket_Member member) {
         Goods goods = goodsSQL.queryGoodsAndSaleById(member.getId());
@@ -33,7 +40,7 @@ public class GoodsBizImpl extends BusinessImpl implements GoodsBiz {
         list.sort(new Comparator<Purchase>() {
             @Override
             public int compare(Purchase o1, Purchase o2) {
-                return o1.getId() - o2.getId();
+                return o2.getId() - o1.getId();
             }
         });
         return list;
@@ -89,7 +96,7 @@ public class GoodsBizImpl extends BusinessImpl implements GoodsBiz {
         list.sort(new Comparator<Import>() {
             @Override
             public int compare(Import o1, Import o2) {
-                return o1.getId() - o2.getId();
+                return o2.getId() - o1.getId();
             }
         });
         return list;
@@ -107,7 +114,7 @@ public class GoodsBizImpl extends BusinessImpl implements GoodsBiz {
         list.sort(new Comparator<Import>() {
             @Override
             public int compare(Import o1, Import o2) {
-                return o1.getId() - o2.getId();
+                return o2.getId() - o1.getId();
             }
         });
         return list;
@@ -186,7 +193,7 @@ public class GoodsBizImpl extends BusinessImpl implements GoodsBiz {
         list.sort(new Comparator<Remove>() {
             @Override
             public int compare(Remove o1, Remove o2) {
-                return o1.getId() - o2.getId();
+                return o2.getId() - o1.getId();
             }
         });
         return list;
@@ -205,7 +212,7 @@ public class GoodsBizImpl extends BusinessImpl implements GoodsBiz {
         list.sort(new Comparator<Remove>() {
             @Override
             public int compare(Remove o1, Remove o2) {
-                return o1.getId() - o2.getId();
+                return o2.getId() - o1.getId();
             }
         });
         return list;
