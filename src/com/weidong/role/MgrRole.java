@@ -33,7 +33,7 @@ public class MgrRole extends Role {
     public List<Import> seeImportRecords(){
         return goodsBiz.seeAllImportRecords();
     }
-    //查看超市所有货品
+    //查看超市所有货品，包含它们各自关联的商品。
     public List<Goods> seeGoods(){
         return goodsBiz.seeGoods();
     }
@@ -105,7 +105,7 @@ public class MgrRole extends Role {
         return saleBiz.seeSaleById(id);
     }
     //查看某商品的最新代。可以是迭代品。新代无论下架。
-    public Sale seeFrontSaleBySaleId(int id) throws IdNotFoundException{
+    public Sale seeFrontBySaleId(int id) throws IdNotFoundException{
         return saleBiz.seeFrontSaleBySaleId(id);
     }
     //搜索某名称的商品
@@ -117,12 +117,12 @@ public class MgrRole extends Role {
         saleBiz.modifySaleMakeup(saleId,saleMakeup);
     }
     //修改商品价格，需要id
-    public void modifySalePrice(Sale sale) throws ValueUnreasonException, IdNotFoundException {
-        saleBiz.modifySalePrice(sale);
+    public void modifySalePrice(int saleId, double price) throws ValueUnreasonException, IdNotFoundException {
+        saleBiz.modifySalePrice(saleId,price);
     }
     //修改商品其他，需要id
-    public void modifySaleName(Sale sale) throws ValueUnreasonException, IdNotFoundException {
-        saleBiz.modifySaleName(sale);
+    public void modifySaleName(int saleId, String name) throws ValueUnreasonException, IdNotFoundException {
+        saleBiz.modifySaleName(saleId,name);
     }
     //**统计商品的修改记录**
     public List<Sale> getSaleModifyRecords(Sale sale) throws IdNotFoundException {

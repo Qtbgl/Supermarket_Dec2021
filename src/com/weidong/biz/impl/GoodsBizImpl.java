@@ -127,7 +127,7 @@ public class GoodsBizImpl extends BusinessImpl implements GoodsBiz {
     @Override
     public List<Goods> seeGoods() {
         //未遗弃的货品，不排序
-        return goodsSQL.queryAllGoods();
+        return goodsSQL.queryAllGoodsAndSale();
     }
 
     @Override

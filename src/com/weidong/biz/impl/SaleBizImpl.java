@@ -189,20 +189,25 @@ public class SaleBizImpl extends BusinessImpl implements SaleBiz {
     }
 
     @Override
-    public void modifySalePrice(Sale sale) throws IdNotFoundException, ValueUnreasonException {
+    public void modifySalePrice(int saleId, double price) throws IdNotFoundException, ValueUnreasonException {
         //检查商品是否有原id
-        Sale find = saleSQL.querySaleById(sale.getId());
+        Sale find = saleSQL.querySaleById(saleId);
         if (find == null) {
             throw new IdNotFoundException();
         }
+        //检查价格是否合理
+        if (price < 0) {
+            throw new ValueUnreasonException();
+        }
+
+        Sale sale = new Sale(); //SQL一次性写入。
+        sale.setId(saleId);
+        sale.setPrice(price);
+
         //使货品组成与原来一样。
         sale.setSaleMakeup(find.getSaleMakeup());
         //使名称与原来相同
         sale.setName(find.getName());
-        //检查价格是否合理
-        if (sale.getPrice() < 0) {
-            throw new ValueUnreasonException();
-        }
         //满足货品组成、价格、名称后。
 
         saleSQL.addSale(sale);
@@ -218,18 +223,24 @@ public class SaleBizImpl extends BusinessImpl implements SaleBiz {
     }
 
     @Override
-    public void modifySaleName(Sale sale) throws IdNotFoundException, ValueUnreasonException {
+    public void modifySaleName(int saleId, String name) throws IdNotFoundException, ValueUnreasonException {
         //检查商品是否有原id
-        Sale find = saleSQL.querySaleById(sale.getId());
+        Sale find = saleSQL.querySaleById(saleId);
         if (find == null) {
             throw new IdNotFoundException();
         }
-        //使货品组成与原来一样。
-        sale.setSaleMakeup(find.getSaleMakeup());
-        //检查名称不为空
-        if (sale.getName() == null) {
+        //检查名称不为空。
+        if (name == null) {
             throw new ValueUnreasonException();
         }
+        //商品名可以重复，不检查。
+
+        Sale sale = new Sale();  //SQL一次性写入。
+        sale.setId(saleId);
+        sale.setName(name);
+
+        //使货品组成与原来一样。
+        sale.setSaleMakeup(find.getSaleMakeup());
         //使价格与原来相同
         sale.setPrice(find.getPrice());
         //满足货品组成、价格、名称后。

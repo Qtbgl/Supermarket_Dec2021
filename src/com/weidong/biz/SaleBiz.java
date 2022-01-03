@@ -33,9 +33,9 @@ public interface SaleBiz{
     //修改商品组合，需要id
     public void modifySaleMakeup(int saleId, Makeup saleMakeup) throws IdNotFoundException, ItemCountException;
     //修改商品价格，需要id
-    public void modifySalePrice(Sale sale) throws IdNotFoundException, ValueUnreasonException;
+    public void modifySalePrice(int saleId, double price) throws IdNotFoundException, ValueUnreasonException;
     //修改商品其他，需要id
-    public void modifySaleName(Sale sale) throws IdNotFoundException, ValueUnreasonException;
+    public void modifySaleName(int saleId, String name) throws IdNotFoundException, ValueUnreasonException;
     //**统计商品的修改记录**，返回迭代品。新代，无论上架，不能是迭代品。
     public List<Sale> analysePastSales(Supermarket_Member member) throws IdNotFoundException;
     //**修改商品的购买记录**。同上，返回迭代品和它们的购买记录。
