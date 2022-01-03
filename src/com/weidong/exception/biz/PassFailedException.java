@@ -1,4 +1,4 @@
-package com.weidong.exception;
+package com.weidong.exception.biz;
 
 public class PassFailedException extends Exception{
 }

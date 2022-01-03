@@ -7,8 +7,8 @@ import com.weidong.datebase.impl.CustomerSQL_Impl;
 import com.weidong.datebase.impl.GoodsSQL_Impl;
 import com.weidong.datebase.impl.SaleSQL_Impl;
 import com.weidong.entity.*;
-import com.weidong.exception.IdNotFoundException;
-import com.weidong.exception.ItemCountException;
+import com.weidong.exception.biz.IdNotFoundException;
+import com.weidong.exception.biz.ItemCountException;
 import com.weidong.role.MgrRole;
 
 import javax.swing.*;
@@ -77,10 +77,110 @@ public class SupermarketJFrame extends JFrame {
 
     Container contentPane;
     JPanel panelSide;
-    JTree tree;
-    Sale oneSale;
+    JTree tree; //树结点可以存数据。
+    OneSale oneSale;
+    private class OneSale{
+        private Sale sale;
+        //正常的商品：有组成，没有购买情况。
+        //用于记录商品树中选中的一个。
+        //只能set，get只能克隆一个，克隆程度（goods之上）。以防止被误改
+        //增加判空方法，判断有没有注入。
+        //更新通过set方法。
+        //封装一些辅助功能，如查找，匹配，提供给其他方法。
+        //还可以有输出到组件的功能。
+        //JFrame构建时创建，那时无sale。
+
+        //用于方便查找goods，与sale伴生。
+        private Map<Integer,Makeup.Node> map;
+
+        public void setSale(Sale sale) {
+            this.sale = sale;
+            if (sale == null){
+                map = null; //同步释放
+            } else {
+                Set<Makeup.Node> makeup = sale.getSaleMakeup().getMakeup();
+                map = new HashMap<>();
+                for (Makeup.Node node : makeup) { //同步载入
+                    map.put(node.getGoods().getId(),node);
+                }
+            }
+        }
+
+        public boolean hasGoods(int goodsId){
+            return map.containsKey(goodsId);
+        }
+
+        //获取的set也是克隆过的。
+        public Set<Makeup.Node> getGoodsMakeup(){
+            Set<Makeup.Node> makeup = sale.getSaleMakeup().getMakeup();
+            Set<Makeup.Node> makeup1 = new HashSet<>();
+            for (Makeup.Node node : makeup) {
+                Makeup.Node node1 = new Makeup.Node();
+                node1.setN(node.getN());  //载入N
+                node1.setGoods(node.getGoods()); //载入goods
+                makeup1.add(node1);
+                //node1全载入完成
+            }
+            return makeup1;
+        }
+
+        //克隆到Goods以上的级别
+        public Sale getCopy(){
+            Sale sale1 = new Sale();
+            sale1.setId(sale.getId());
+            sale1.setName(sale.getName());
+            sale1.setPrice(sale.getPrice());
+            sale1.setSaleMakeup(new Makeup());
+            sale1.getSaleMakeup().setSale(sale1);
+            sale1.getSaleMakeup().setMakeup(this.getGoodsMakeup());
+            return sale1;
+        }
+
+    }
     JPanel panelBody;
-    JTable goodsTable;
+    JTable goodsTable; //主表不能存数据
+
+    private class TableGoods{
+        //list存放未遗弃的所有货品。
+        List<Goods> list;
+        //与table上陈列的数据实时的下标和行匹配
+        //辅助功能，打印到主表
+        //因此需要一些值，如组成数量，复杂的状态，要让goods关联sale。
+        //但是它不允许调用数据库
+        //本类的辅助功能-2
+
+        public void setList(List<Goods> list) {
+            this.list = list;
+        }
+
+        //判断货品是否缺货，对于其关联的任一商品。
+        private static boolean isShortGoods(Goods goods){
+            Set<Goods.Node> compose = goods.getComposeSale();
+            int allN = 0;
+            for (Goods.Node node : compose) {
+                allN += node.getN();
+            }
+            return goods.getC() > allN;
+        }
+
+        public void printToTable(){
+            isSystemOperating = true;   //调节冲突
+            Set<Makeup.Node> makeup = oneSale.getGoodsMakeup();
+
+            for (int i = 0; i < list.size() && i < TABLE_ROWS; ++i){
+                Goods goods = list.get(i);
+
+                goodsTable.setValueAt(new GoodsObject(goods),i,0); //0列，放对象实体。
+                goodsTable.setValueAt(goods.getType(),i,1);
+                goodsTable.setValueAt(goods.getC(),i,2);
+                goodsTable.setValueAt("无",i,3);
+                goodsTable.setValueAt(null,i,4);
+            }
+            isSystemOperating = false;
+        }
+
+
+    }
     boolean isSystemOperating;
     final static int TABLE_COLUMNS = 5;
     final static int TABLE_ROWS = 17;
@@ -114,7 +214,7 @@ public class SupermarketJFrame extends JFrame {
         panelBottom.setLayout(new FlowLayout(FlowLayout.CENTER));
         contentPane.add(panelBottom,BorderLayout.SOUTH);
         //右侧的主表组件
-        Object[] columnNames = {"货品名称","货品类型","现存数量","组成数量","选择"};
+        Object[] columnNames = {"货品名称","货品类型","现存数量","组成数量","状态"};
         Object[][] rowData = new Object[TABLE_ROWS][TABLE_COLUMNS];
         goodsTable = new JTable(rowData,columnNames);
         panelBody.add(goodsTable.getTableHeader(),BorderLayout.NORTH);
@@ -125,7 +225,7 @@ public class SupermarketJFrame extends JFrame {
         tree.setShowsRootHandles(true);
         tree.setEditable(false);
         panelSide.add(tree);
-        oneSale = null;
+        oneSale = new OneSale();
         isSystemOperating = false;
 
         //下侧的功能栏组件
@@ -160,7 +260,7 @@ public class SupermarketJFrame extends JFrame {
 
         this.printToTree(sales);
 
-        this.printToTable(list);
+//        this.printToTable(list);
     }
 
     //本类的辅助功能-1
@@ -185,19 +285,6 @@ public class SupermarketJFrame extends JFrame {
         tree.setModel(treeModel);
     }
 
-    //本类的辅助功能-2
-    private void printToTable(List<Goods> list){
-        isSystemOperating = true;   //调节冲突
-        for (int i = 0; i < list.size() && i < TABLE_ROWS; ++i){
-            Goods goods = list.get(i);
-            goodsTable.setValueAt(new GoodsObject(goods),i,0); //0列，放对象实体。
-            goodsTable.setValueAt(goods.getType(),i,1);
-            goodsTable.setValueAt(goods.getC(),i,2);
-            goodsTable.setValueAt("无",i,3);
-            goodsTable.setValueAt(null,i,4);
-        }
-        isSystemOperating = false;
-    }
 
     //本类的辅助功能-3
     private void printToTable(List<Goods> list, Makeup makeup){
@@ -223,28 +310,7 @@ public class SupermarketJFrame extends JFrame {
         isSystemOperating = false;
     }
 
-    //本类的辅助功能-4
-    public Sale copyOneSale(){ //到node的级别，没有复制goods。
-        if (oneSale == null) {
-            return null;
-        }
-        Sale sale = new Sale();
-        sale.setId(oneSale.getId());
-        sale.setName(oneSale.getName());
-        sale.setPrice(oneSale.getPrice());
-        sale.setSaleMakeup(new Makeup());
-        sale.getSaleMakeup().setSale(sale);
-        sale.getSaleMakeup().setMakeup(new HashSet<>());
-        Set<Makeup.Node> makeup1 = sale.getSaleMakeup().getMakeup();
-        Set<Makeup.Node> makeup = oneSale.getSaleMakeup().getMakeup();
-        for (Makeup.Node node : makeup) {
-            Makeup.Node node1 = new Makeup.Node();
-            node1.setGoods(node.getGoods());
-            node1.setN(node.getN());
-            makeup1.add(node1);
-        }
-        return sale;
-    }
+    /*以上为本类辅助功能、函数*/
 
 
     private class PointRespond implements MouseListener {
@@ -278,7 +344,6 @@ public class SupermarketJFrame extends JFrame {
     }
 
     private class TableRespond implements TableModelListener{
-
         @Override
         public void tableChanged(TableModelEvent e) {
             //System.out.println("Table改变事件，isSystemOperating = "+isSystemOperating);
@@ -286,83 +351,6 @@ public class SupermarketJFrame extends JFrame {
                 int row = e.getFirstRow();
                 int col = e.getColumn();
                 //更改列3：货品组成数量。
-                if (col == 3){
-                    if (oneSale != null){
-                        Makeup.Node find = null; //寻找，记录原来的N值。
-                        String infoN = (String) goodsTable.getValueAt(row,col);
-                        GoodsObject goodsObject = (GoodsObject) goodsTable.getValueAt(row, 0);
-                        System.out.println("准备更新组成商品："+goodsObject);
-                        try {
-                            boolean flag = false; //标志：是修改，不是去除
-                            int dataN = 0;
-                            if (infoN.equals("无")){
-                                flag = true;
-                            }else {
-                                dataN = Integer.parseInt(infoN);
-                            }
-                            //Sale saleCopy = SupermarketJFrame.this.copyOneSale();
-                            Goods goods = goodsObject.getGoods();
-                            //添加信息到货品组成。
-                            for (Makeup.Node node : oneSale.getSaleMakeup().getMakeup()) {
-                                if (node.getGoods().getId() == goods.getId()){
-                                    find = node; //已锁定到内部成员，直接改值。
-                                    break;
-                                }
-                            }
-                            if (flag){
-                                if (find == null){ //操作异常，同上一个处理
-                                    throw new NumberFormatException("操作异常，同上一个处理");
-                                }else { //去除，第二种情况。
-                                    oneSale.getSaleMakeup().getMakeup().remove(find);
-                                }
-                            }else{ //更改和新增
-                                if (find == null) {
-                                    Makeup.Node node1 = new Makeup.Node();
-                                    node1.setN(dataN);
-                                    node1.setGoods(goods);  //goods被共占，允许只读。
-                                    oneSale.getSaleMakeup().getMakeup().add(node1);
-                                } else {
-                                    find.setN(dataN);
-                                }
-                            }
-                            //界面功能调用-3
-                            user.modifySaleMakeup(oneSale.getId(),oneSale.getSaleMakeup());
-                            JOptionPane.showMessageDialog(
-                                    SupermarketJFrame.this,
-                                    "更改组成数量成功！",
-                                    "提示",
-                                    JOptionPane.INFORMATION_MESSAGE
-                            );
-                        } catch (NumberFormatException numberFormatException){
-                            //System.out.println("输入不是数字，或者本来是‘无’又选了‘无’。");
-                            JOptionPane.showMessageDialog(
-                                    SupermarketJFrame.this,
-                                    "输入无意义",
-                                    "更改失败！",
-                                    JOptionPane.WARNING_MESSAGE
-                            );
-                        } catch (ItemCountException itemCountException) {
-                            JOptionPane.showMessageDialog(
-                                    SupermarketJFrame.this,
-                                    "数量异常",
-                                    "更改失败！",
-                                    JOptionPane.WARNING_MESSAGE
-                            );
-                        } catch (IdNotFoundException idNotFoundException) {
-                            idNotFoundException.printStackTrace();
-                        } finally {
-                            //界面功能调用-4
-                            //oneSale = user.seeSaleById(oneSale.getId());
-                            //有bug，这时的oneSale已经过时了！
-                            oneSale = null;
-                            List<Sale> sales = user.seeSale();
-                            List<Goods> list = user.seeGoods();
-                            SupermarketJFrame.this.printToTree(sales);
-                            SupermarketJFrame.this.printToTable(list);
-                        }
-                    }
-                }
-
 
             }
 
@@ -384,12 +372,12 @@ public class SupermarketJFrame extends JFrame {
                 } else if (userObject instanceof SaleObject saleObject) {
                     System.out.println(saleObject.getSale());
                     //刷新下边栏功能块。
-                    oneSale = saleObject.getSale();
+                    /*oneSale = saleObject.getSale();
                     saleNameTextField.setText(oneSale.getName());
                     salePriceTextField.setText(""+oneSale.getPrice());
                     //界面功能调用-2
                     List<Goods> list = user.seeGoods();
-                    SupermarketJFrame.this.printToTable(list,oneSale.getSaleMakeup());
+                    SupermarketJFrame.this.printToTable(list,oneSale.getSaleMakeup());*/
 
                 } else if (userObject instanceof GoodsObject goodsObject) {
                     System.out.println(goodsObject.getGoods());
@@ -399,6 +387,8 @@ public class SupermarketJFrame extends JFrame {
             }
         }
     }
+
+    /*以上为侧树的事件响应*/
 
 
     public static void main(String[] args) {

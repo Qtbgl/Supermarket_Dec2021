@@ -4,13 +4,12 @@ import com.weidong.biz.CustomerBiz;
 import com.weidong.biz.GoodsBiz;
 import com.weidong.biz.SaleBiz;
 import com.weidong.entity.*;
-import com.weidong.exception.AlreadyExistedAddException;
-import com.weidong.exception.IdNotFoundException;
-import com.weidong.exception.ItemCountException;
-import com.weidong.exception.ValueUnreasonException;
+import com.weidong.exception.biz.AlreadyExistedAddException;
+import com.weidong.exception.biz.IdNotFoundException;
+import com.weidong.exception.biz.ItemCountException;
+import com.weidong.exception.biz.ValueUnreasonException;
 import com.weidong.role.superclass.Role;
 
-import java.util.Date;
 import java.util.List;
 
 public class MgrRole extends Role {
@@ -104,6 +103,10 @@ public class MgrRole extends Role {
     //查看指定商品，需要id
     public Sale seeSaleById(int id){
         return saleBiz.seeSaleById(id);
+    }
+    //查看某商品的最新代。可以是迭代品。新代无论下架。
+    public Sale seeFrontSaleBySaleId(int id) throws IdNotFoundException{
+        return saleBiz.seeFrontSaleBySaleId(id);
     }
     //搜索某名称的商品
     public List<Sale> searchSaleLikeName(String info){

@@ -1,13 +1,8 @@
 package com.weidong.window;
 
-import com.weidong.entity.Customer;
 import com.weidong.entity.Goods;
 import com.weidong.entity.Makeup;
 import com.weidong.entity.Sale;
-import com.weidong.exception.AlreadyExistedAddException;
-import com.weidong.exception.IdNotFoundException;
-import com.weidong.exception.PassFailedException;
-import com.weidong.exception.ValueUnreasonException;
 import com.weidong.role.VisitorRole;
 import com.weidong.window.dialog.CustomerInputDialog;
 import com.weidong.window.dialog.MyJOptionPane;
@@ -18,7 +13,6 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 

@@ -5,10 +5,10 @@ import com.weidong.biz.GoodsBiz;
 import com.weidong.biz.SaleBiz;
 import com.weidong.entity.Customer;
 import com.weidong.entity.Sale;
-import com.weidong.exception.AlreadyExistedAddException;
-import com.weidong.exception.IdNotFoundException;
-import com.weidong.exception.PassFailedException;
-import com.weidong.exception.ValueUnreasonException;
+import com.weidong.exception.biz.AlreadyExistedAddException;
+import com.weidong.exception.biz.IdNotFoundException;
+import com.weidong.exception.biz.PassFailedException;
+import com.weidong.exception.biz.ValueUnreasonException;
 import com.weidong.role.superclass.Role;
 
 import java.util.List;

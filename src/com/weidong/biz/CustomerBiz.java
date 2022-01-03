@@ -4,7 +4,7 @@ import com.weidong.entity.Customer;
 import com.weidong.entity.Purchase;
 import com.weidong.entity.Sale;
 import com.weidong.entity.superclass.Supermarket_Member;
-import com.weidong.exception.*;
+import com.weidong.exception.biz.*;
 
 import java.util.List;
 

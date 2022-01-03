@@ -7,9 +7,9 @@ import com.weidong.datebase.GoodsSQL;
 import com.weidong.datebase.SaleSQL;
 import com.weidong.entity.*;
 import com.weidong.entity.superclass.Supermarket_Member;
-import com.weidong.exception.AlreadyExistedAddException;
-import com.weidong.exception.IdNotFoundException;
-import com.weidong.exception.ItemCountException;
+import com.weidong.exception.biz.AlreadyExistedAddException;
+import com.weidong.exception.biz.IdNotFoundException;
+import com.weidong.exception.biz.ItemCountException;
 
 import java.util.*;
 
@@ -21,9 +21,13 @@ public class GoodsBizImpl extends BusinessImpl implements GoodsBiz {
     @Override
     public List<Sale> analyseSales(Supermarket_Member member) {
         Goods goods = goodsSQL.queryGoodsAndSaleById(member.getId());
-        Set<Sale> compose = goods.getComposeSale();
+        List<Sale> list = new ArrayList<>();
+        Set<Goods.Node> compose = goods.getComposeSale();
+        for (Goods.Node node : compose) {
+            list.add(node.getSale());
+        }
         //组成商品，不排序
-        return new ArrayList<>(compose);
+        return list;
     }
 
     @Override
@@ -32,9 +36,9 @@ public class GoodsBizImpl extends BusinessImpl implements GoodsBiz {
         Goods goods = goodsSQL.queryGoodsAndSaleAndCustomerById(member.getId());
         ArrayList<Purchase> list = new ArrayList<>();
         //所有购买记录
-        Set<Sale> sales = goods.getComposeSale();
-        for (Sale sale : sales) {
-            list.addAll(sale.getCustomerPurchase());
+        Set<Goods.Node> compose = goods.getComposeSale();
+        for (Goods.Node node : compose) {
+            list.addAll(node.getSale().getCustomerPurchase());
         }
         //id代表日期排序
         list.sort(new Comparator<Purchase>() {

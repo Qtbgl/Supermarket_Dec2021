@@ -1,16 +1,10 @@
 package com.weidong.window;
 
-import com.weidong.entity.Customer;
 import com.weidong.entity.Goods;
 import com.weidong.entity.Makeup;
 import com.weidong.entity.Sale;
-import com.weidong.exception.IdNotFoundException;
-import com.weidong.exception.ItemCountException;
-import com.weidong.exception.ValueUnreasonException;
 import com.weidong.role.CustomerRole;
-import com.weidong.role.VisitorRole;
 import com.weidong.window.dialog.MyJOptionPane;
-import com.weidong.window.dialog.SaleMessageDialog;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;

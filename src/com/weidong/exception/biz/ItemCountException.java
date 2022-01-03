@@ -1,4 +1,4 @@
-package com.weidong.exception;
+package com.weidong.exception.biz;
 
 public class ItemCountException extends Exception{
 }

@@ -5,14 +5,13 @@ import com.weidong.biz.impl.superclass.BusinessImpl;
 import com.weidong.datebase.CustomerSQL;
 import com.weidong.datebase.GoodsSQL;
 import com.weidong.datebase.SaleSQL;
-import com.weidong.entity.Goods;
 import com.weidong.entity.Makeup;
 import com.weidong.entity.Purchase;
 import com.weidong.entity.Sale;
 import com.weidong.entity.superclass.Supermarket_Member;
-import com.weidong.exception.IdNotFoundException;
-import com.weidong.exception.ItemCountException;
-import com.weidong.exception.ValueUnreasonException;
+import com.weidong.exception.biz.IdNotFoundException;
+import com.weidong.exception.biz.ItemCountException;
+import com.weidong.exception.biz.ValueUnreasonException;
 
 import java.util.*;
 
@@ -116,6 +115,24 @@ public class SaleBizImpl extends BusinessImpl implements SaleBiz {
     public Sale seeSaleById(int id) {
         //获取无论上架，包括迭代品的sale
         return saleSQL.queryAnySaleById(id);
+    }
+
+    @Override
+    public Sale seeFrontSaleBySaleId(int id) throws IdNotFoundException {
+        //如果id代表的就是新代
+        Sale find = saleSQL.queryFrontSaleById(id);
+        if (find != null){
+            return find;
+        }
+        //如果id代表的是迭代品
+        int i = saleSQL.queryPidByOldSaleId(id);
+        //找到的i，即所关联的新代的id。
+        Sale front = saleSQL.queryFrontSaleById(i);
+        if (front == null){
+            throw new IdNotFoundException();
+        }
+
+        return front;
     }
 
     @Override

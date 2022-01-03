@@ -1,12 +1,10 @@
 package com.weidong.window;
 
 import com.weidong.entity.*;
-import com.weidong.exception.AlreadyExistedAddException;
-import com.weidong.exception.IdNotFoundException;
-import com.weidong.exception.ItemCountException;
-import com.weidong.exception.ValueUnreasonException;
+import com.weidong.exception.biz.IdNotFoundException;
+import com.weidong.exception.biz.ItemCountException;
+import com.weidong.exception.biz.ValueUnreasonException;
 import com.weidong.role.CustomerRole;
-import com.weidong.window.dialog.CustomerInputDialog;
 import com.weidong.window.dialog.MyJOptionPane;
 import com.weidong.window.dialog.SaleBuyInputDialog;
 

@@ -7,7 +7,7 @@ import com.weidong.datebase.GoodsSQL;
 import com.weidong.datebase.SaleSQL;
 import com.weidong.entity.*;
 import com.weidong.entity.superclass.Supermarket_Member;
-import com.weidong.exception.*;
+import com.weidong.exception.biz.*;
 
 import java.util.*;
 

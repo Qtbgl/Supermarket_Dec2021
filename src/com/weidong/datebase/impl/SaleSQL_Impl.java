@@ -443,6 +443,31 @@ public class SaleSQL_Impl extends BaseSQL implements SaleSQL {
     }
 
     @Override
+    public int queryPidByOldSaleId(int id) {
+        Connection conn = null;
+        PreparedStatement pStmt = null;
+        ResultSet rs = null;
+        int salePid = 0;
+        String sql = "select sale_pid from sale " +
+                "where sale_id = ? and "+SaleSQL.IS_OLD_SALE;
+        try {
+            conn = getConn();
+            pStmt = conn.prepareStatement(sql);
+            pStmt.setObject(1,id);
+            rs = pStmt.executeQuery();
+            if (rs.next()) {
+                salePid = rs.getInt("sale_pid");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            closeAll(conn,pStmt,rs);
+        }
+
+        return salePid;
+    }
+
+    @Override
     public List<Sale> queryFrontDeletedSale() {
         Connection conn = null;
         PreparedStatement pStmt = null;

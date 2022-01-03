@@ -13,11 +13,32 @@ public class Goods extends Supermarket_Member {
     //货品可出售的数量
     int C;
     //组合进该货品的商品
-    Set<Sale> composeSale;
+    Set<Goods.Node> composeSale;
     //货品进口记录
     List<Import> imports;
     //货品撤除记录
     List<Remove> removes;
+
+    public static class Node{
+        Sale sale;
+        int N;
+
+        public Sale getSale() {
+            return sale;
+        }
+
+        public void setSale(Sale sale) {
+            this.sale = sale;
+        }
+
+        public int getN() {
+            return N;
+        }
+
+        public void setN(int n) {
+            N = n;
+        }
+    }
 
     @Override
     public String toString() {
@@ -30,6 +51,14 @@ public class Goods extends Supermarket_Member {
                 ", removes=" + removes +
                 ", id=" + id +
                 '}';
+    }
+
+    public Set<Node> getComposeSale() {
+        return composeSale;
+    }
+
+    public void setComposeSale(Set<Node> composeSale) {
+        this.composeSale = composeSale;
     }
 
     public String getName() {
@@ -54,14 +83,6 @@ public class Goods extends Supermarket_Member {
 
     public void setC(int c) {
         C = c;
-    }
-
-    public Set<Sale> getComposeSale() {
-        return composeSale;
-    }
-
-    public void setComposeSale(Set<Sale> composeSale) {
-        this.composeSale = composeSale;
     }
 
     public List<Import> getImports() {

@@ -30,6 +30,8 @@ public interface SaleSQL {
     List<Sale> queryAllFrontSaleAndPurchase();
     //获取最新加入的商品的物理id。理论上是正上架的新代。
     int queryLastSaleId();
+    //查看某迭代商品的pid。不是迭代品，返回整型0
+    int queryPidByOldSaleId(int id);
     //以上获取无论上架，新代商品，不获取迭代品。
 
     //获取所有下架商品，都是新代，不获取迭代品。

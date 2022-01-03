@@ -4,14 +4,12 @@ import com.weidong.biz.CustomerBiz;
 import com.weidong.biz.GoodsBiz;
 import com.weidong.biz.SaleBiz;
 import com.weidong.entity.Customer;
-import com.weidong.entity.Makeup;
 import com.weidong.entity.Purchase;
 import com.weidong.entity.Sale;
 import com.weidong.entity.superclass.Supermarket_Member;
-import com.weidong.exception.*;
+import com.weidong.exception.biz.*;
 import com.weidong.role.superclass.Role;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class CustomerRole extends Role {

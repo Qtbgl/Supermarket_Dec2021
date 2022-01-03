@@ -1,15 +1,13 @@
 package com.weidong.biz;
 
-import com.weidong.entity.Goods;
 import com.weidong.entity.Makeup;
 import com.weidong.entity.Purchase;
 import com.weidong.entity.Sale;
 import com.weidong.entity.superclass.Supermarket_Member;
-import com.weidong.exception.IdNotFoundException;
-import com.weidong.exception.ItemCountException;
-import com.weidong.exception.ValueUnreasonException;
+import com.weidong.exception.biz.IdNotFoundException;
+import com.weidong.exception.biz.ItemCountException;
+import com.weidong.exception.biz.ValueUnreasonException;
 
-import java.util.Date;
 import java.util.List;
 
 public interface SaleBiz{
@@ -21,6 +19,8 @@ public interface SaleBiz{
     public List<Sale> seeAnySale();
     //查看指定商品，无论上架包括迭代品，需要id。
     public Sale seeSaleById(int id);
+    //查看某商品的最新代。可以是迭代品。新代无论下架。
+    public Sale seeFrontSaleBySaleId(int id) throws IdNotFoundException;
     //搜索某名称的商品，已上架
     public List<Sale> searchSaleLikeName(String info);
     //搜索购买记录，通过某货品的名称
