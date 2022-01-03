@@ -52,6 +52,8 @@ public class SupermarketJFrame extends JFrame {
     private static class GoodsObject{
         Goods goods;
 
+        Sale belongSale;
+
         @Override
         public String toString() {
             return goods.getName();
@@ -63,6 +65,14 @@ public class SupermarketJFrame extends JFrame {
 
         public void setGoods(Goods goods) {
             this.goods = goods;
+        }
+
+        public Sale getBelongSale() {
+            return belongSale;
+        }
+
+        public void setBelongSale(Sale belongSale) {
+            this.belongSale = belongSale;
         }
 
         public GoodsObject() {
@@ -79,6 +89,28 @@ public class SupermarketJFrame extends JFrame {
     JPanel panelSide;
     JTree tree; //树结点可以存数据。
     OneSale oneSale;
+    //本类的辅助功能-1
+    private void printToTree(List<Sale> sales){
+        DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
+        rootNode.setUserObject("超市");
+        for (Sale sale : sales) {
+            DefaultMutableTreeNode saleNode = new DefaultMutableTreeNode();
+            saleNode.setUserObject(new SaleObject(sale));
+            rootNode.add(saleNode);
+            //创建商品结点
+            Set<Makeup.Node> makeup = sale.getSaleMakeup().getMakeup();
+            for (Makeup.Node node : makeup) {
+                DefaultMutableTreeNode goodsNode = new DefaultMutableTreeNode();
+                goodsNode.setUserObject(new GoodsObject(node.getGoods()));
+                saleNode.add(goodsNode);
+                //创建货品结点
+            }
+        }
+        //全部载入完成，到rootNode中。
+        DefaultTreeModel treeModel = new DefaultTreeModel(rootNode);
+        tree.setModel(treeModel);
+    }
+
     private class OneSale{
         private Sale sale;
         //正常的商品：有组成，没有购买情况。
@@ -92,6 +124,13 @@ public class SupermarketJFrame extends JFrame {
 
         //用于方便查找goods，与sale伴生。
         private Map<Integer,Makeup.Node> map;
+        //选中的属于该商品的货品。依赖此类，被访问保护，但不同步。
+        private GoodsObject oneGoods;
+
+        //通过临时类，选中侧树上的货品，等同于选中了所属的商品。
+        public void setOneGoods(GoodsObject oneGoods) {
+            this.oneGoods = oneGoods;
+        }
 
         public void setSale(Sale sale) {
             this.sale = sale;
@@ -104,6 +143,10 @@ public class SupermarketJFrame extends JFrame {
                     map.put(node.getGoods().getId(),node);
                 }
             }
+        }
+
+        public boolean isEmpty(){
+            return sale == null;
         }
 
         public boolean hasGoods(int goodsId){
@@ -124,6 +167,24 @@ public class SupermarketJFrame extends JFrame {
             return makeup1;
         }
 
+        //获取oneGoods在第一个的组成货品
+        public List<Makeup.Node> getGoodsMakeupInOrder(){
+            List<Makeup.Node> list = new ArrayList<>(this.getGoodsMakeup());
+            if (oneGoods == null) {
+                return list;
+            }
+            //一个商品至少有一个货品。
+            for (int i = 0; i < list.size(); i++) {
+                if (list.get(i).getGoods().getId() == oneGoods.getGoods().getId()){
+                    Makeup.Node temp = list.get(0);
+                    list.set(0,list.get(i));
+                    list.set(i,temp);
+                    break;
+                }
+            }
+            return list;
+        }
+
         //克隆到Goods以上的级别
         public Sale getCopy(){
             Sale sale1 = new Sale();
@@ -136,9 +197,17 @@ public class SupermarketJFrame extends JFrame {
             return sale1;
         }
 
+        //下下边栏的组件上打印
+        public void printToBottom(){;
+            saleNameTextField.setText(sale.getName());
+            salePriceTextField.setText(""+sale.getPrice());
+        }
+
     }
+
     JPanel panelBody;
     JTable goodsTable; //主表不能存数据
+    TableGoods tableGoods;
 
     private class TableGoods{
         //list存放未遗弃的所有货品。
@@ -149,38 +218,79 @@ public class SupermarketJFrame extends JFrame {
         //但是它不允许调用数据库
         //本类的辅助功能-2
 
+        //用于方便查找goods，与list伴生。
+        private Map<Integer,Goods> map;
+
         public void setList(List<Goods> list) {
             this.list = list;
+            if (list == null) {
+                map = null;  //同释放
+            } else {
+                map = new HashMap<>();  //同载入
+                for (Goods goods : list) {
+                    map.put(goods.getId(),goods);
+                }
+            }
         }
 
         //判断货品是否缺货，对于其关联的任一商品。
         private static boolean isShortGoods(Goods goods){
             Set<Goods.Node> compose = goods.getComposeSale();
-            int allN = 0;
+            int allGoodsN = 0;
             for (Goods.Node node : compose) {
-                allN += node.getN();
+                allGoodsN += node.getN();
             }
-            return goods.getC() > allN;
+            return goods.getC() > allGoodsN;
         }
 
         public void printToTable(){
             isSystemOperating = true;   //调节冲突
-            Set<Makeup.Node> makeup = oneSale.getGoodsMakeup();
-
-            for (int i = 0; i < list.size() && i < TABLE_ROWS; ++i){
-                Goods goods = list.get(i);
-
-                goodsTable.setValueAt(new GoodsObject(goods),i,0); //0列，放对象实体。
-                goodsTable.setValueAt(goods.getType(),i,1);
-                goodsTable.setValueAt(goods.getC(),i,2);
-                goodsTable.setValueAt("无",i,3);
-                goodsTable.setValueAt(null,i,4);
+            Set<Goods> ignoreSet = new HashSet<>();
+            int i = 0; //用于输出计数。
+            //如果是初始状态，则没有在侧树上进行任何选择，oneSale就没有东西。
+            if (!oneSale.isEmpty()) {
+                //额外输出别选中的商品，后面有的就不输出了。
+                List<Makeup.Node> makeup = oneSale.getGoodsMakeupInOrder(); //被选中的货品一定在第一个上。
+                for (Makeup.Node node : makeup) {
+                    String valueAt4 = "";
+                    Goods goods = this.map.get(node.getGoods().getId());
+                    if (goods != null) {  //在输出的货品表中有
+                        ignoreSet.add(goods); //下面要查
+                        valueAt4 = TableGoods.isShortGoods(goods)? "缺货中": "充足";
+                    }else {
+                        valueAt4 = "已遗弃";
+                    }
+                    goodsTable.setValueAt(node.getGoods().getName(),i,0);
+                    goodsTable.setValueAt(node.getGoods().getType(),i,1);
+                    goodsTable.setValueAt(node.getGoods().getC(),i,2);
+                    goodsTable.setValueAt(node.getN(),i,3); //这一列值下面没有
+                    goodsTable.setValueAt(valueAt4,i,4);
+                    i++;
+                }
             }
+
+            //继续输出商品选中组中，没有的货品。
+            while (i < list.size() && i < TABLE_ROWS){
+                Goods goods = list.get(i);
+                if (!ignoreSet.contains(goods)){
+                    String valueAt4 = TableGoods.isShortGoods(goods)? "缺货中": "充足";
+                    goodsTable.setValueAt(goods.getName(),i,0);
+                    goodsTable.setValueAt(goods.getType(),i,1);
+                    goodsTable.setValueAt(goods.getC(),i,2);
+                    goodsTable.setValueAt("无",i,3);
+                    goodsTable.setValueAt(valueAt4,i,4);
+                    i++;
+                }
+            }
+            //输出完后关闭
             isSystemOperating = false;
         }
 
-
     }
+
+    /*以上为tree和table组键的辅助类、函数*/
+
+
     boolean isSystemOperating;
     final static int TABLE_COLUMNS = 5;
     final static int TABLE_ROWS = 17;
@@ -219,13 +329,14 @@ public class SupermarketJFrame extends JFrame {
         goodsTable = new JTable(rowData,columnNames);
         panelBody.add(goodsTable.getTableHeader(),BorderLayout.NORTH);
         panelBody.add(goodsTable,BorderLayout.CENTER);
+        tableGoods = new TableGoods(); //空初始
 
         //左侧的树组件
         tree = new JTree();
         tree.setShowsRootHandles(true);
         tree.setEditable(false);
         panelSide.add(tree);
-        oneSale = new OneSale();
+        oneSale = new OneSale(); //空初始
         isSystemOperating = false;
 
         //下侧的功能栏组件
@@ -250,98 +361,47 @@ public class SupermarketJFrame extends JFrame {
         tree.addTreeSelectionListener(new TreeSelectRespond());
         //事件监听-2
         goodsTable.getModel().addTableModelListener(new TableRespond());
-        goodsTable.addMouseListener(new PointRespond());
     }
 
     public void init(){
         //界面功能调用-1
         List<Goods> list = user.seeGoods();
         List<Sale> sales = user.seeSale();
-
         this.printToTree(sales);
-
-//        this.printToTable(list);
+        //渲染出初始的，未选中任何商品的，货品栏信息。
+        tableGoods.setList(list);
+        tableGoods.printToTable();
     }
 
-    //本类的辅助功能-1
-    private void printToTree(List<Sale> sales){
-        DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
-        rootNode.setUserObject("超市");
-        for (Sale sale : sales) {
-            DefaultMutableTreeNode saleNode = new DefaultMutableTreeNode();
-            saleNode.setUserObject(new SaleObject(sale));
-            rootNode.add(saleNode);
-            //创建商品结点
-            Set<Makeup.Node> makeup = sale.getSaleMakeup().getMakeup();
-            for (Makeup.Node node : makeup) {
-                DefaultMutableTreeNode goodsNode = new DefaultMutableTreeNode();
-                goodsNode.setUserObject(new GoodsObject(node.getGoods()));
-                saleNode.add(goodsNode);
-                //创建货品结点
-            }
-        }
-        //全部载入完成，到rootNode中。
-        DefaultTreeModel treeModel = new DefaultTreeModel(rootNode);
-        tree.setModel(treeModel);
-    }
+    private class TreeSelectRespond implements TreeSelectionListener{
 
+        @Override
+        public void valueChanged(TreeSelectionEvent e) {
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
+            if (node != null){ //如果node不是空，则没有选择柄。                
+                Object userObject = node.getUserObject();
+                System.out.println(userObject);
+                if (userObject instanceof String) {
+                    System.out.println("选中了超市");
 
-    //本类的辅助功能-3
-    private void printToTable(List<Goods> list, Makeup makeup){
-        isSystemOperating = true;   //调节冲突
-        Map<Integer,Makeup.Node> helpMap = new HashMap<>();
-        for (Makeup.Node node : makeup.getMakeup()) {
-            helpMap.put(node.getGoods().getId(),node);
-        }
-        //渲染数据
-        for (int i = 0; i < list.size() && i < TABLE_ROWS; ++i){
-            Goods goods = list.get(i);
-            goodsTable.setValueAt(new GoodsObject(goods),i,0); //0列，放对象实体。
-            goodsTable.setValueAt(goods.getType(),i,1);
-            goodsTable.setValueAt(goods.getC(),i,2);
-            Makeup.Node node = helpMap.get(goods.getId());
-            if (node == null){
-                goodsTable.setValueAt("无",i,3);
+                } else if (userObject instanceof SaleObject saleObject) {
+                    System.out.println(saleObject.getSale());
+                    //刷新下边栏功能块。
+                    /*
+
+                    List<Goods> list = user.seeGoods();
+                    SupermarketJFrame.this.printToTable(list,oneSale.getSaleMakeup());*/
+
+                } else if (userObject instanceof GoodsObject goodsObject) {
+                    System.out.println(goodsObject.getGoods());
+                }
             } else {
-                goodsTable.setValueAt(node.getN(),i,3);
+                System.out.println("选择到了树柄。");
             }
-            goodsTable.setValueAt(null,i,4);
-        }
-        isSystemOperating = false;
-    }
-
-    /*以上为本类辅助功能、函数*/
-
-
-    private class PointRespond implements MouseListener {
-
-        @Override
-        public void mouseClicked(MouseEvent e) {
-            int row = goodsTable.rowAtPoint(e.getPoint());
-            int col = goodsTable.columnAtPoint(e.getPoint());
-//            System.out.println("("+row+","+col+")");
-        }
-
-        @Override
-        public void mousePressed(MouseEvent e) {
-
-        }
-
-        @Override
-        public void mouseReleased(MouseEvent e) {
-
-        }
-
-        @Override
-        public void mouseEntered(MouseEvent e) {
-
-        }
-
-        @Override
-        public void mouseExited(MouseEvent e) {
-
         }
     }
+
+    /*以上为侧树的事件响应*/
 
     private class TableRespond implements TableModelListener{
         @Override
@@ -358,37 +418,6 @@ public class SupermarketJFrame extends JFrame {
     }
 
     /*以上是主表事件的响应*/
-
-    private class TreeSelectRespond implements TreeSelectionListener{
-
-        @Override
-        public void valueChanged(TreeSelectionEvent e) {
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
-            if (node != null){ //如果node不是空，则没有选择柄。                
-                Object userObject = node.getUserObject();
-                System.out.println(userObject);
-                if (userObject instanceof String) {
-                    System.out.println("选中了超市");
-                } else if (userObject instanceof SaleObject saleObject) {
-                    System.out.println(saleObject.getSale());
-                    //刷新下边栏功能块。
-                    /*oneSale = saleObject.getSale();
-                    saleNameTextField.setText(oneSale.getName());
-                    salePriceTextField.setText(""+oneSale.getPrice());
-                    //界面功能调用-2
-                    List<Goods> list = user.seeGoods();
-                    SupermarketJFrame.this.printToTable(list,oneSale.getSaleMakeup());*/
-
-                } else if (userObject instanceof GoodsObject goodsObject) {
-                    System.out.println(goodsObject.getGoods());
-                }
-            } else {
-                System.out.println("选择到了树柄。");
-            }
-        }
-    }
-
-    /*以上为侧树的事件响应*/
 
 
     public static void main(String[] args) {
